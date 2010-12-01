@@ -1,7 +1,8 @@
+<wiki:toc /> 
 * 오브젝트와 의존관계
   * 초난감DAO
   * DAO의 분리
 
 * 테스트
-  * UserDaoTest다시보기
-  * UserDaoTest개선
+  * UserDaoTest 다시보기
+  * UserDaoTest 개선
