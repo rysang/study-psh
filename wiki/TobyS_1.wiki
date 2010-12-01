@@ -26,6 +26,6 @@ public void userDAOTest() {
 }
 }}}
 
-= 리뷰 =
+= 생각하기=
 
 ㅁㄴㅇㄻㅇㄴㄻㅇㄴㄹ
