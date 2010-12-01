@@ -1,13 +1,13 @@
-#summary Toby Spring 1부 이해 2장 테스트
+#summary 토비의 스프링, 1부 이해 - 2장 테스트
 
-<wiki:toc max_depth="2" />
+<wiki:toc max_depth="1" />
 
-= Introduction =
+= 2.1 UserDaoTest 다시보기 =
 
 Add your content here.
 
 
-= Details =
+= 2.2 UserDaoTest 개선 =
 
 Add your content here.  Format your content with:
   * Text in *bold* or _italic_
