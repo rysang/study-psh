@@ -1,14 +1,29 @@
-#오브젝트와 의존관계
-<wiki:toc /> 
+#토비의 스프링, 1부 이해 - 1장 오브젝트와 의존관계
 
-= Introduction =
-
-Add your content here.
+<wiki:toc />
 
 
-= Details =
+== 1.1 초난감 DAO ==
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+
+{{{
+public void userDAOTest() {
+
+   ... conde
+
+}
+}}}
+
+
+== 1.2 DAO의 분리 ==
+
+{{{
+public void userDAOTest() {
+
+   ... conde
+
+}
+}}}
+
+
+
