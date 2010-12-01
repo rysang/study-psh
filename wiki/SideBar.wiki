@@ -1,6 +1,3 @@
-#ToS SideBar
-
-= Menu=
 
 * 오브젝트와 의존관계
   # 초난감DAO
