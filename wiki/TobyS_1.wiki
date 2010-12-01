@@ -4,7 +4,7 @@
 
 = 내용정리 =
 
-== 1 초난감 DAO ==
+== 1.1 초난감 DAO ==
 
 
 {{{
@@ -16,7 +16,7 @@ public void userDAOTest() {
 }}}
 
 
-== 2 DAO의 분리 ==
+== 1.2 DAO의 분리 ==
 
 {{{
 public void userDAOTest() {
