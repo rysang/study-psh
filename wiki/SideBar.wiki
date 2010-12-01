@@ -4,5 +4,5 @@
   * DAO의 분리
 
 * 테스트
-  * UserDaoTe시보기
-  * UserDaoTest 개선
+  * 보기
+  * 개선
