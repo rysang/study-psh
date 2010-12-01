@@ -1,9 +1,10 @@
 #summary 토비의 스프링, 1부 이해 - 1장 오브젝트와 의존관계
 
-<wiki:toc max_depth="1" />
+<wiki:toc max_depth="2" />
 
+= 내용정리 =
 
-= 1.1 초난감 DAO =
+== 1.1 초난감 DAO ==
 
 
 {{{
@@ -15,7 +16,7 @@ public void userDAOTest() {
 }}}
 
 
-= 1.2 DAO의 분리 =
+== 1.2 DAO의 분리 ==
 
 {{{
 public void userDAOTest() {
@@ -24,3 +25,7 @@ public void userDAOTest() {
 
 }
 }}}
+
+= 리뷰 =
+
+ㅁㄴㅇㄻㅇㄴㄻㅇㄴㄹ
