@@ -2,26 +2,26 @@
 
 = Introduction =
 
-# 위키 사용법은 아래 규칙을 따릅니다.
-# 위키 마크업 문서 : http://code.google.com/p/support/wiki/WikiSyntax
+  # 위키 사용법은 아래 규칙을 따릅니다.
+  # 위키 마크업 문서 : http://code.google.com/p/support/wiki/WikiSyntax
 
 
 = Details =
 
-# Page Name
+  # Page Name
  - 페이지명은 기본적으로 영문자만 사용가능하며 빈문자열도 입력될 수 없습니다.
  - 한번 저장되면 수정할 수 없습니다;; 
  - Pascal Case 를 따르겠습니다! (예제: *S*pring*S*ecurity)
  - 토비의 스프링을 리뷰하는 글의 제목은 'TobySpring_00' 규칙을 따르겠습니다.
 
-# Summary 
+  # Summary 
  - 서머리는 글 상단에 꼭 작성하도록 합니다.
 
-# 목차생성
+  # 목차생성
  - 서머리 다음으로 목차생성을 하도록 합니다.
 
-# SideBar
+  # SideBar
  - SideBar 관리는 기본적으로 제(박성희)가 하며, 수정 시엔 저에게 문의해주세요~
 
-# 사용 예
+  # 사용 예
  - [http://code.google.com/p/study-psh/w/edit/TobySpring_01 1장 오브젝트와 의존관계]
