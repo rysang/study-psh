@@ -11,7 +11,7 @@
   # Page Name
    * 페이지명은 기본적으로 영문자만 사용가능하며 빈문자열도 입력될 수 없습니다.
    * 한번 저장되면 수정할 수 없습니다;; 
-   * Pascal Case 를 따르겠습니다! (예제: *S*pring*S*ecurity)
+   * Pascal Case 를 따르겠습니다! (예제: SpringSecurity)
    * 토비의 스프링을 리뷰하는 글의 제목은 'TobySpring_00' 규칙을 따르겠습니다.
   # Summary 
    * 서머리는 글 상단에 꼭 작성하도록 합니다.
