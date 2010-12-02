@@ -69,6 +69,21 @@ ApplicationContext context = new GenericXmlApplicionContext("applicationContext.
 
 *DataSource 구현 클래스 이용하기*
 
+(결국 이 길고 긴 설명을 통해 dataSource DI 까지 겨우 왔다.
+당연히 가져다 쓰면 되겠지~ 했던 이 dataSource 까지도 아 네가 이 과정을 거쳐왔구나 하고 깊게 생각하게 된다ㅋ)
+
+{{{
+<bean id="dataSource" class="org.springframewokr.jdbc.datasource.SimpleDriverDataSource">
+   <property name="driverClass" value="com.mysql.jdbc.Driver" />
+   <property name="url" value="jdbc:mysql://localhost/springbook" />
+   <property name="username" value="spring" />
+   <property name="password" value="book" />
+</bean>
+
+<bean id="userDao" class="springbook...UserDao">
+   <bean id="dataSource" ref="dateSource" />
+</bean>
+}}}
 
 
 나는 처음 개발할 때 applicationContext 를 xml 로만 작성해서인지
