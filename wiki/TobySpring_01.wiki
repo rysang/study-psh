@@ -108,10 +108,36 @@ public class UserDao {
 }
 }}}
 
-휴- 아직도 갈 길이 멀다. UserDao 생성자에 아직도 클래스 이름이 들어가고 있다.
+휴- 아직도 갈 길이 멀다. UserDao 생성자에 아직도 클래스 이름이 들어가고 있다. DConnectionMaker 라는 클래스를 알아버려서 불 필요한 의존관계가 생겨나버렸다.
 
 * 관계설정 책임의 분리 *
 
+우리는 이 쓸데없는 관심을 분리해서 클라이언트에게 "너가 던져줘!" 라고 해줄 것이다. UserDao 에서는 파라미터로 ConnectionMaker 를 구현한 클래스를 받아서 직접적인 연결을 사라지게 할 것이다.
+
+{{{
+public class UserDao {
+   private ConnectionMaker connectionMaker;
+   public UserDao(ConnectionMaker connectionMaker) {
+      this.connectionMaker = connectionMaker;
+   }
+   .....
+}
+
+public class UserDaoTest {
+   public static void main(String[] args) throws ClassNotFoundException, SQLException {
+      ConnectionMaker connectionMaker = new DConnectionMaker();
+      UserDao dao = new UserDao(connectionMaker);
+   }
+}
+}}}
+
+UserDaoTest 는 UserDao 와 ConnectionMaker 와의 런타임 오브젝트 의존관계를 설정하는 책임을 담당하게 되었다. 이렇게 인터페이스 도입과 클라이언트의 도움을 받는 방법으로 상속을 사용했을 때 보다 훨씬 유연해졌다. ConnectoinMaker 라는 인터페이스를 구현한 클래스라면 그대로 적용할 수 있게 되었다.
+
+이 과정에서 우리는 다음과 같은 원칙과 패턴을 발견할 수 있었다.
+
+*개방폐쇄원칙 Open-Closed Principle* : 클래스나 모듈은 확장에는 열려 있어야 하고 변경에는 닫혀 있어야 한다.
+
+*높은 응집도와 낮은 결합도* : 
 
 
 == 1.4 제어의 역전 ==
