@@ -49,9 +49,9 @@ public void userDAOTest() {
 
 {{{
 <beans>
-  <bean id="connectionMaker" class="springbook...DConnectionMaker" />
+  <bean id="*connectionMaker*" class="springbook...DConnectionMaker" />
   <bean id="userDao" class="springbook...UserDao">
-     <property name="connectionMaker" ref="connectionMaker" />
+     <property name="connectionMaker" ref="*connectionMaker*" />
   </bean>
 </beans>
 }}}
