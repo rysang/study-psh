@@ -20,4 +20,4 @@
   # SideBar
    * SideBar 관리는 기본적으로 제(박성희)가 하며, 수정 시엔 저에게 문의해주세요~
   # 사용 예
-   * [http://code.google.com/p/study-psh/w/edit/TobySpring_01 1장 오브젝트와 의존관계]
+   * [TobySpring_01 1장 오브젝트와 의존관계]
