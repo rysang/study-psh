@@ -48,7 +48,7 @@ public void userDAOTest() {
 애노테이션으로 설정된 application context 클래스를 XML 로 변경해본다.
 
 ||            || 자바 코드 설정              || XML 설정
-|| 빈 설정파일 || @Configuration             || <beans>
+|| 빈 설정파일 || @Configuration             || {{{<beans>}}}
 || 빈 이름     || @Bean methodName()        || <bean id="methodName"
 || 빈 클래스   || @return new BeanClass(); || class="package.BeanClass">
 
