@@ -45,6 +45,21 @@ public void userDAOTest() {
 
 == 1.8 XML을 이용한 설정 ==
 
+애노테이션으로 설정된 application context 클래스를 XML 로 변경해본다.
+
+||            || 자바 코드 설정              || XML 설정
+|| 빈 설정파일 || @Configuration             || <beans>
+|| 빈 이름     || @Bean methodName()        || <bean id="methodName"
+|| 빈 클래스   || @return new BeanClass(); || class="package.BeanClass">
+
+
+
+
+나는 처음 개발할 때 applicationContext 를 xml 로만 작성해서인지
+애노테이션에 적응이 덜 되서 인지
+한 눈에 파악할 수 있는 XML 방식이 더 편하고 좋은 것 같다.
+여러분의 생각은 어떠신지요??
+
 
 = 생각하기=
 
@@ -53,4 +68,6 @@ public void userDAOTest() {
 약 1년전, 스트러츠만 하다가 스프링프로젝트에 처음 들어왔을 때
 동료가 설명해준 스프링에 대한 나의 기억이다. 
 
-이 기억들은 스프링교육이나 책을 공부하면서
+이 기억들은 스프링교육이나 책을 공부하면서 점점 의미를 더해가고 있다.
+그렇다고 왜 에러가 나는지 몰랐다는 뜻은 아니다. 다만 IoC, DI 라는 개념을 생각해 봤을 때
+나는 그저 "그냥 그래야만해~" 라고 깊게 생각하지 않고 개발을 해왔던 것 같다.
