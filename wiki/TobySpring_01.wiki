@@ -17,17 +17,17 @@
 중복된 코드가 존재하는 UserDao 에 있는 2개의 메소드에서 중복 코드를 새로운 메소드로 추출해 보지만 (alt+shift+m이 떠오른다ㅋ)
 
 {{{
-public void add(User user) throws .... {
+public void add(User user) throws ClassNotFoundException, SQLException {
    Connection c = getConnection();
    ....
 }
 
-public void get(String id) throws .... {
+public void get(String id) throws ClassNotFoundException, SQLException {
    Connection c = getConnection();
    ....
 }
 
-private Connection getConnection() throws .... {
+private Connection getConnection() throws ClassNotFoundException, SQLException {
    ...
    return DriverManager.getConnection(....);
 }
@@ -39,9 +39,28 @@ private Connection getConnection() throws .... {
 
 *[http://underclub.tistory.com/124 템플릿 메소드 패턴]* : 
 하위 클래스에서 어떤 구현을 하더라도 상위 클래스에서는 정해진대로 큰 흐름만을 처리한다.
-
 *[http://underclub.tistory.com/125 팩토리 메소드 패턴]* : 
 상위 클래스에서 훅 메소드 혹은 추상 메소드를 오버라이딩하여 구현하며 슈퍼클래스의 기본 코드에서 독립시킨다.
+
+{{{
+public abstract class UserDao {
+    public void add(...) { .......... }
+    public void get(...) { .......... }
+    public abstract Connection getConnection() throws ClassNotFoundException, SQLException;
+}
+
+public class NUserDao extends UserDao {
+   public Connection getConnection() throw ClassNotFoundException, SQLException {
+      // n사 connection 생성코드
+   }
+}
+
+public class DUserDao extends UserDao {
+   public Connection getConnection() throw ClassNotFoundException, SQLException {
+      // d사 connection 생성코드
+   }
+}
+}}}
 
 
 하지만 상하위 클래스의 밀접한 관계를 가지는 상속의 단점을 그대로 안고 있는 UserDao 는 다시 리팩토링 되어야 할 것이다. 다중상속이 되지 않아 확장이 어려우며, 밀접한 연결 관계는 변화에 대해 개방적이다.
