@@ -46,15 +46,29 @@ public void userDAOTest() {
 == 1.8 XML을 이용한 설정 ==
 
 애노테이션으로 설정된 application context 클래스를 XML 로 변경해본다.
+ref 속성으로 여전히 의존관계를 설정할 수 있다.
+(d사와 n사는 각자 가져가서 알아서 쓸테지만 ref 를 잘 설명할 수 있을 것 같아 예제를 좀 바꾸어 보았다.)
 
+*applicationContext.xml*
 {{{
 <beans>
-  <bean id="connectionMaker" class="springbook...DConnectionMaker" />
+  <bean id="dConnectionMaker" class="springbook...DConnectionMaker" />
+  <bean id="nConnectionMaker" class="springbook...NConnectionMaker" />
+
   <bean id="userDao" class="springbook...UserDao">
-     <property name="connectionMaker" ref="connectionMaker" />
+     <property name="connectionMaker" ref="dConnectionMaker" />
   </bean>
 </beans>
 }}}
+
+xml을 이용해 application context 를 만들었으니 생성자도 같이 바뀐다.
+
+{{{
+ApplicationContext context = new GenericXmlApplicionContext("applicationContext.xml");
+}}}
+
+*DataSource 구현 클래스 이용하기*
+
 
 
 나는 처음 개발할 때 applicationContext 를 xml 로만 작성해서인지
