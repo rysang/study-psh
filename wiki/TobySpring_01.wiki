@@ -48,7 +48,12 @@ public void userDAOTest() {
 애노테이션으로 설정된 application context 클래스를 XML 로 변경해본다.
 
 {{{
-<bean id="connectionMaker" class="springbook...DConnectionMaker" />
+<beans>
+  <bean id="connectionMaker" class="springbook...DConnectionMaker" />
+  <bean id="userDao" class="springbook...UserDao">
+     <property name="connectionMaker" ref="connectionMaker" />
+  </bean>
+</beans>
 }}}
 
 
