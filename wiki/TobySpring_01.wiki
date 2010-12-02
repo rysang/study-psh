@@ -1,12 +1,15 @@
 #summary 토비의 스프링, 1부 이해 - 1장 오브젝트와 의존관계
 
-
+<wiki:comment>
+목차 자동 생성
+</wiki:comment>
 <wiki:toc max_depth="2" />
 
 = 내용정리 =
 
 == 1.1 초난감 DAO ==
 
+초난감 DAO 였다. 와우... 그렇군
 
 {{{
 public void userDAOTest() {
@@ -29,4 +32,5 @@ public void userDAOTest() {
 
 = 생각하기=
 
-ㅁㄴㅇㄻㅇㄴㄻㅇㄴㄹ
+싱글톤과 싱글톤 레지스트리... 
+개발하면서... 어쩌고 저쩌고...
