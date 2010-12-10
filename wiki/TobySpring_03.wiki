@@ -38,3 +38,126 @@ public void deleteAll() throws SQLException {
 
 
 == 3.2 변하는 것과 변하지 않는 것 ==
+
+try/catch/finally 를 사용하고 나서 발견되는 문제점은 모든 메소드마다 해당 구문이 반복된다는 것이다.
+그래서 변하는 부분을 메소드로 추출해 본다.
+
+{{{
+public void deleteAll() throws SQLException {
+   ...
+   try {
+      c = dataSource.getConnection();
+      ps = makeStatement(c);
+      ps.executeUpdate();
+   } catch (SQLException e) {
+      ...
+   } finally {
+      ...
+   }
+}
+
+private PreparedStatement makeStatement(Connection c) throws SQLException {
+   PreparedStatement ps;
+   ps = c.prepareStatement("delete from users");
+   return ps;
+}
+}}}
+
+하지만 이 경우 분리시킨 메소드를 다른 곳에서 재사용할수가 없다. 뭔가 거꾸로 된 듯한 느낌이다.
+
+*템플릿 메소드 패턴의 적용*
+
+템플릿 메소드 패턴을 적용해서 분리해보도록 한다. UserDAO의 makeStatement 메소드를 추상메소드로 두고, 각 기능을 담당하는 메소드를 서브 클래스에 적용해본다.
+
+{{{
+abstract protected PreparedStatement makeStatement(Connection c) throws SQLException;
+}}}
+
+{{{
+public class UserDaoDeleteAll extends UserDAO {
+   protected PreparedStatement makeStatement(Connection c) throws SQLException {
+      PreparedStatement ps = c.prepareStatement("delete from users");
+      return ps;
+   }
+}
+}}}
+
+하지만 이 방법은 DAO 로직마다 상속을 통해 새로운 클래스를 만들어야 하는 단점이 생겼다. 또한 확장구조가 이미 클래스를 설계하는 시점에서 고정되어서 유연성이 떨어진다는 점이다.
+
+*전략 패턴(Strategy Pattern)의 적용*
+
+템플릿 메소드 패턴보다 유연하고 확장성이 뛰어난 것이 Context(맥락)와 Strategy(전략)으로 분리해서 클래스 레벨에서는 인터페이스를 통해서만 의존하도록 만드는 전략패턴이다.
+
+deleteAll 메소드에서 변하지 않는 부분을 contextMethod 로 두고, PrepaaredStatement 를 만들어 주는 외부 기능이 Strategy 부분이 되는 것이다.
+ 
+{{{
+...
+public interface StatementStrategy {
+   PreparedStatement makePreparedStatement(Connection c) throws SQLException;
+}
+}}}
+
+{{{
+...
+public class DeleteAllStatement implements StatementStrategy {
+   public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+      PreparedStatement ps = c.prepareStatement("delete from users");
+      return ps;
+   }
+}
+}}}
+
+{{{
+public void deleteAll() throws SQLException {
+   ...
+   try {
+      c = dataSource.getConnection();
+      StatementStrategy strategy = new DeleteAllStatement();
+      ps = strategy.makePreparedStatement(c);
+      ps.executeUpdate();
+   } catch {
+      ...
+   } finally {
+      ...
+   }
+}
+}}}
+
+전략패턴을 이용해서 컨텍스트는 그대로 유지되면서 전략을 바꿔쓸 수 있게 되었다. 하지만 컨텍스트 안에서 이미 구체적인 DeleteAllStatement 클래스를 사용하도록 고정되어 있다. 
+
+*DI 적용을 위한 클라이언트/컨텍스트 분리*
+
+전략패턴에서 컨텍스트가 어떤 전략을 따를지 결정하는 것은 클라이언트가 결정해야 한다. 그래서 클라이언트를 두려고 보니 1장에서 사용했던 오브젝트 팩토리 사용과 비슷하게 되었다.
+
+컨텍스트에 해당하는 부분은 별도의 메소드로 독립시키고 deleteAll 메소드를 클라이언트로 사용하도록 한다. 이때 전략 인터페이스인 StatementStrategy 는 메소드의 파라미터로 지정될 것이다.
+
+{{{
+public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException {
+   Connection c = null;
+   PreparedStatement ps = null;
+   try {
+      c = dateSource.getConnection();
+      ps = stmt.makePreparedStatement(c); // 전략 파라미터 사용
+      ps.executeUpdate();
+   } cateh (SQLException e) {
+      ...
+   } finally { 
+      ...
+   }
+}
+}}}
+
+{{{
+public void deleteall() throws SQLException {
+   StatementStrategy st = new DeleteAllStatement(); // 클라이언트가 전략 생성
+   jdbcContextWithStatementStrategy(st); // 호출
+}
+}}}
+
+전략패턴의 구조를 제대로 갖춘 이 소스는 비록 클라이언트와 컨텍스트를 클래스로 분리하지는 않았지만 의존관계와 책음으로 볼 때 DI 구조라고 이해할 수도 있다. 두개의 오브젝트가 하나의 클래스 안에 담긴 이런 경우에는 DI가 매우 작은 단위의 코드와 메소드 사이에서 일어나기도 한다. 이를 코드에 의한 DI라는 의미로 수동DI 라고 부를 수도 있다.
+
+
+== 3.3 JDBC 전략 패턴의 최적화 ==
+
+
+== 3.4 컨텍스트와 DI ==
