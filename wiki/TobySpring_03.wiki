@@ -1,13 +1,40 @@
 #summary 토비의 스프링 1부, 제3장 템플릿
 
-= Introduction =
+<wiki:toc max_depth="2" />
 
-Add your content here.
+= 내용정리 =
+
+템플릿이란, 바뀌는 성질이 다른 코드 중에서 변경이 거의 일어나지 않으며 일정한 패턴으로 유지되는 특성을 가진 부분을 자유롭게 변경되는 성질을 가진 부분으로부터 독릭시켜서 효과적으로 활용할 수 있도록 하는 방법이다.
+
+== 3.1 다시 보는 초난감 DAO ==
+
+UserDAO 에는 아직 예외처리에 대한 문제점이 남아 있다. JDBC 코드라면 반드시 지켜야 할 리소스 반환 문제다.
+
+그래서 우리는 try/catch/finally 구문을 사용해서 수정해보도록 한다.
+
+{{{
+public void deleteAll() throws SQLException {
+   Connection c = null;
+   PreparedStatement ps = null;
+
+   try {
+      c = dataSource.getConnection();
+      ps = c.preareStatement("delete from users");
+      ps.executeUpdate();
+   } catch (SQLException e) {
+      throw e;
+   } finally {
+      if(ps != null) {
+         try { ps.close(); } catch (SQLException e) { }
+      }
+      if(c != null) {
+         try { c.close(); } catch (SQLException e) { }
+      }
+   }
+}
+}}}
+
+조회의 경우 ResultSet 도 마찬가지로 리소스를 반환하도록 한다.
 
 
-= Details =
-
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+== 3.2 변하는 것과 변하지 않는 것 ==
