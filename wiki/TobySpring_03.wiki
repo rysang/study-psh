@@ -275,6 +275,60 @@ public class JdbcContext {
 }
 }}}
 
+{{{
+public class UserDao {
+   ...
+   private JdbcContext jdbcContext;
+   public void setJdbcContext(jdbcContext) {
+      this.jdbcContext = jdbcContext;
+   }
+
+   public void add(final User user) throws SQLException {
+      this.jdbcContext.workWithStatementStrategy(
+         new StatementStrategy() {...};
+      );
+   }
+
+   public void deleteAll() throws SQLException {
+      this.jdbcContext.workWithStatementStrategy(
+         new StatementStrategy() {...};
+      );
+   }
+}
+}}}
+
+UserDao 는 JdbcContext 에 의존하고 있으므로 DI 받을 수 있도록 한다.
+
+*빈 의존관계 변경*
+
+바뀐 코드를 따라서 ApplicationContext 설정도 바뀌어야 한다.
+
+{{{
+<beans>
+   <bean id="userDao" class="springbook...UserDao">
+      <property name="jdbcContext" ref="jdbcContext" />
+   </bean>
+
+   <bean id="jdbcContext" class="springbook...JdbcContext">
+      <property name="dataSource" ref="dataSource" />
+   </bean>
+
+   <bean id="dataSource" class="org....SimpleDriverDataSource">
+      ...
+   </bean>
+</beans>
+}}}
+
+스프링의 DI 는 인터페이스를 사이에 두고 의존 클래스를 바꿔서 사용하도록 하는게 목적이지만 jdbcContext 는 그렇지 못하고 있다. 하지만 굳이 인터페이스를 통해서 사용하게 하지 않아도 된다.
+
+첫번째 이유로 jdbcContext 가 스프링의 싱글톤 레지스트리에서 관리되는 싱글톤 빈이 되기 때문이다. jdbcContext 의 경우 그 자체로 독립적인 JDBC 컨텍스트를 제공해주는 일종의 서비스 오브젝트로서 의미가 있다. 
+
+두번째 이유로 DI 를 위해서는 주입되는 오브젝트와 주입받는 오브젝트 양쪽 모두다 스프링의 빈으로 등록되어야 하는데, jdbcContext 가 DI 를 통해 다른 빈에 의존하고 있기 때문이다.
+
+
+강력한 결합을 가진 관계를 허용하면서도 싱글톤으로 만들고, DI 필요성을 위해 스프링의 빈으로 등록해서 UserDao 에 DI 되도록 만들어져도 좋은 것이다.
+
+
 == 3.5 템플릿과 콜백 ==
 
 
