@@ -2,14 +2,29 @@
 
 <wiki:toc max_depth="1" />
 
-= 2.1 UserDaoTest 다시보기 =
+= 정리 =
 
-Add your content here.
+개요..
+
+== 2.1 UserDaoTest 다시보기 ==
+
+테스트란 개발자가 예상하고 의도했던 대로 코드가 정확히 동작하는지를 확인해서, 만든 코드를 확신할 수 있게 해주는 작업이다.
+
+*UserDaoTest의 특징*
 
 
-= 2.2 UserDaoTest 개선 =
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+== 2.2 UserDaoTest 개선 ==
+
+
+== 2.3 개발자를 위한 테스팅 프레임워크 JUnit ==
+
+
+== 2.4 스프링 테스트 적용 ==
+
+
+== 2.1 학습 테스트로 배우는 스프링 ==
+
+
+
+= 생각하기 =
