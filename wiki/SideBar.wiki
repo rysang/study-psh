@@ -3,7 +3,9 @@
 * 토비의 스프링
 
   * [http://code.google.com/p/study-psh/wiki/TobySpring_01 1장 어쩌고 저쩌고]
-  * [http://code.google.com/p/study-psh/wiki/TobySpring_02 2장 어쩌고 저쩌고]
+  * [http://code.google.com/p/study-psh/wiki/TobySpring_02 2장 테스트]
+  * [http://code.google.com/p/study-psh/wiki/TobySpring_03 3장 템플릿]
+
 
 
 * 전문분야
