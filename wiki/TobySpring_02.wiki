@@ -1,6 +1,6 @@
 #summary 토비의 스프링, 1부 이해 - 2장 테스트
 
-<wiki:toc max_depth="1" />
+<wiki:toc max_depth="2" />
 
 = 정리 =
 
