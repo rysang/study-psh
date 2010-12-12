@@ -366,7 +366,189 @@ public class UserDao {
 
 콜백은 보통 작업 흐름 중 특정 기능을 위해 한 번 호출되는 경우가 일반적이기 때문에 단일 메소드 인터페이스를 사용한다. 
 
+이런 템플릿/콜백 방식은 전략 패턴과 DI의장점을 익명내부클래스사용 전략과 결합한 독특한 활용법이라고 이해할 수 있다. 
+
+*편리한 콜백의 재활용*
+
+익명내부클래스 사용으로 상대적으로 코드의 작성 및 읽기가 조금 불편한 점을 콜백의 분리와 재활용을 통해 익명내부클래스의 사용을 최소화 해본다.
+
+{{{
+public void deleteAll() throws SQLException {
+   executeSql("delete from users");
+}
+
+private void eexecuteSql(final String query) throws SQLException {
+   this.jdbcContext.workWithStatementStrategy(
+      new StatementStrategy() {
+         public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+            return c.prepareStatement(query);
+         }
+      }
+   );
+}
+}}}
+
+executeSql 메소드에 바뀌지 않는 모든 부분을 빼내고, 바뀌는 부분인 SQL 문장만 파라미터로 받아서 사용하게 하였다. 또한 이 메소드는 UserDao 에서만 사용하기는 아까우니 jdbcContext 클래스 안으로 옮기도로록 한다. (이 때 접근자는 public 이 되어야 할 것이다)
+
+{{{
+public void deleteAll() throws SQLException {
+   this.jdbcContext.executeSql("delete from users");
+}
+}}}
+
+{{{
+public void eexecuteSql(final String query) throws SQLException {
+   workWithStatementStrategy(
+      new StatementStrategy() {
+         public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+            return c.prepareStatement(query);
+         }
+      }
+   );
+}
+}}}
+
+이로 인해 jdbcContext 안에 클라이언트, 템플릿, 콜백이 모두 함께 공존하면서 동작하는 구조가 되었다.
+
 == 3.6 스프링의 JdbcTemplate ==
 
+앞서 만들었던 jdbcContext 와 유사한, 스프링에서 제공하는 JdbcTemplate 을 사용해보도록 한다.
+
+{{{
+public class UserDao {
+   ...
+   private JdbcTemplate jdbcTemplate;
+
+   public void setDataSource(DataSource dataSource) {
+      this.jdbcTemplate = new JdbcTemplate(dataSrouce);
+      this.dataSource = dataSource;   
+   }
+}
+}}}
+
+*update*
+
+deleteAll 메소드에서 적용했던 콜백은 StatementStrategy 인터페이스의 makePreparedStatement 메소드이다. 이에 대응되는 JdbcTemplate 의 콜백은 PreparedStatementCreator 인터페이스의 createPreparedStatement 메소드이다. 하지만 executeSql 메소드처럼 SQL 문장만 파라미터로 넘길 수도 있다.
+
+{{{
+public void deleteAll() {
+   this.jdbcTemplate.update("delete from users");
+}
+}}}
+
+하지만 바인딩 되어야 할 필요가 있는 add 메소드의 경우 SQL 문장과 함께 가변인자로 선언된 파라미터를 제공해주면 된다. 
+
+{{{
+   this.jdbcTemplate.update("insert into users(id, name, password) values (?, ?, ?)", user.getId(), user.getName(), user.getPassword());
+}}}
+
+*queryForInt*
+
+getCount 메소드의 경우 쿼리를 실행하고 ResultSet 을 통해 결과값을 가져온다. 이런 흐름을 가진 코드에서 사용할 수 있는 템플릿은 PreparedStatementCreator 콜백과 ResultSetExtractor 콜백을 파라미터로 받는 query 메소드이다.
+
+{{{
+public int getCount() {
+   return this.jdbcTemplate.query(new PreparedStatementCreator() {
+         public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+            return con.prepareStatement("select count(*) from users");
+         }
+      }, new ResultSetExtractor<Integer>() { // 제네릭스 타입 파라미터
+         public Integer extractData(ResultSet rs) throws SQLException, DataAccessException {
+            rs.next();
+            return rs.getInt(1);
+         }
+      }
+   });
+}
+}}}
+
+위 코드의 ResultSetExtractor는 제네릭스 타입 파라미터를 가지고 있다. SQL 의 실행 결과가 하나의 저수값이 되는 경우는 자주 볼 수 있기 때문에 이런 콜백을 내장하고 있는 queryForInt() 라는 편리한 메소드가 있다.
+
+{{{
+public int getCount() {
+   return this.jdbcTemplate.queryForInt("select count(*) from users");
+}
+}}}
+
+*queryForObject*
+
+이번에는 get 메소드에 jdbcTemplate 을 적용해본다. 리턴 되는 값이 getCount 처럼 단순하지 않고 User 오브젝트를 리턴하기 때문이다.
+
+그러기 위해 ResultSetExtractor대신 RowMapper 콜백을 사용해보록 하겠다. ResultSetExtractor 와 RowMapper 는 템플릿으로부터 ResultSet 을 전달받고 필요한 정보를 추출해서 리턴하는 방식이다. 하지만 ResultSetExtractor는 ResultSet 을 한 번 전달받아 알아서 추출 작업을 모두 진행하고 최종결과만 리턴해주는데 반해, RowMapper 는 ResultSet 의 로우 하나를 매핑하기 위해 사용되기 때문에 여러번 호출될 수 있다는 점이 다르다.
+
+{{{
+public User get(String id) {
+   return this.jdbcTemplate.queryForObject("select * from users where id = ?", 
+      new Object[]{id}, // 뒤에 다른 파라미터가 있기 때문에 가변인자 대신 배열을 이용
+      new RowMapper<User>() {
+         public User mapRow(ResultSet rs, int rowNum) throws SQLException {
+            User user = new User();
+            user.setId(rs.getString("id");
+            ...
+            return user;
+         }  
+      });
+}
+}}}
+
+이 queryForObject 메소드는 SQL 실행 시 한개의 로우만 얻을 것이라고 기대한다. 그리고 하나가 아니라면 EmptyResultDataAccessException 예외를 던지도록 되어 있다.
+
+*query*
+
+하나의 로우가 아닌 다수의 로우를 가져오게 되는 getAll 메소드를 만들어보자. 여러개이니 리턴은 User 오브젝트의 컬렉션인 List<User> 타입으로 돌려주는게 가장 좋은 방법일 것이다.
+
+{{{
+public List<User> getAll() {
+   return this.jdbcTemplate.query("select * from users order by id", 
+      new RowMapper<User>() {
+         public User mapRow(ResultSet rs, int rowNum) throws SQLException {
+            User user = new User();
+            user.setId(rs.getString("id"));
+            ...
+            return user;
+         }
+   });
+}
+}}}
+
+*중복제거*
+
+get 메소드와 getAll 메소드의 RowMapper 가 똑같이 사용되고 있음을 발견할 수 있다. RowMapper 콜백은 userMapper 라는 인스턴스 변수로 만들도록 한다.
+
+{{{
+public class UserDao {
+   private RowMapper<User> userMapper = new RowMapper<User>() {
+      public User mapRow(ResulSet rs, int rowNum) throws SQLException {
+         User user = new User();
+         user.setId(rs.getString("id"));
+         ...
+         return user;
+      }
+   }; 
+
+   public User get(String id) {
+      return this.jdbcTemplate.queryForInt("select * from users where id = ?",
+         new Object[]{id}, 
+         this.userMapper
+      );
+   }
+
+   pubblic List<User> getAll() {
+      return this.jdbcTemplate.query("select * from users",
+         this.userMapper
+      );
+   }
+}
+}}}
+
+이제 UserDao 에는 User 정보를 DB 에 넣거나 가져오거나 조작하는 방법에 대한 핵심적인 로직만 담겨 있다. 만약 사용할 테이블과 필드정보가 바뀌면 UserDao 의 거의 모든 코드가 함께 바뀌게 되며, 이는 응집도가 높다고 볼 수 있다.
+
+JDBC API 를 사용하는 방식, 예외처리, 리소스의 반납, DB 연결에 대한 책임과 관심은 모두 JdbcTemplate 에게 있다. 이런 면에서 UserDao 와 낮은 결합도를 가지고 있게 되었다.
+
+이런 UserDao 에도 개선할 점을 아직도 발견할 수 있다. 첫째, userMapper 가 인스턴스 변수로 설정되어 있고 한 번 만들어지면 변경되지 않는 프로퍼티와 같은 성격을 띠고 있으니 아예 DI 용 프로퍼티로 만들어 버릴 수 있다. 이렇게 되면 UserDao 의 코드를 수정하지 않고도 매핑정보를 변경할 수 있는 장점이 잇다.
+
+두번째로 SQL 문장을 UserDao 코드가 아닌 외부 리소스에 담고 이를 읽어와 사용하게 하는 것이다. 그러면 DB 테이블의 정보가 바뀌어 쿼리문이 수정되어야 할 때 UserDao 클래스를 수정하는 일은 없을 것이다.
+
+요즘엔 초창기에 주로 사용됐던 JdbcTemplate 보단 이것을 확장한 SimpleJdbcTemplate 가 주로 사용된다.
 
 = 생각하기 =
