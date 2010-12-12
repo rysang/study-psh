@@ -10,15 +10,151 @@
 
 테스트란 개발자가 예상하고 의도했던 대로 코드가 정확히 동작하는지를 확인해서, 만든 코드를 확신할 수 있게 해주는 작업이다.
 
-*UserDaoTest의 특징*
+*웹을 통한 DAO 테스트 방법의 문제점*
 
+우리는 보통 DAO 를 테스트 할 때, 서비스계층, MVC 프레젠테이션 계층까지 포함한 모든 기능을 대충이라도 만든 후 웹 화면을 띄어서 확인했다. 하지만 이 방법은 DAO 에 대한 테스트로서 단점을 너무나 많이 가지고 있다.
+
+모든 기능을 다 만들고 나서야 테스트가 가능하며, 어디에서 문제가 발생했는지를 찾아내는 수고를 더해야 한다. 
+
+*작은 단위의 테스트*
+
+테스트하고자 하는 대상이 명확하다면 그 대상에만 집중해서 테스트 하는 것이 바람직하다. UserDaoTest 를 수행해서 테스트 할 때에는 웹 화면등의 다른 작업이 필요하지 않았다. 에러가 나더라도 범위가 작아서 찾기가 수월했다. 이렇게 테스트는 가능하면 작은 단위로 쪼개서 집중해서 할 수 있어야 한다. 1장에서 나왔던 관심사의 분리가 여기에도 적용되는 셈이다.
+
+이렇게 작은 단위의 코드에 대해 테스트를 수행하는 것을 단위 테스트라고 한다. 작게 보자면 메소드를 하나의 단위라고 생각할 수도 있고, 사용자 기능을 통 틀어서 하나의 단위라고 생각할 수 있다.
+
+*자동수행 테스트 코드*
+
+UserDaoTest 의 특징 중 하나는, 테스트할 데이터가 코드를 통해 제공되어 자동으로 실행한다는 점이다. 웹을 통한 테스트 시에는 테스트 데이터를 일일이 입력해줘야 하는 번거로움이 있었다. 그 번거로움이 없어졌기 때문에 테스트를 빠르게 실행할 수 있다. 그래서 자주 반복할 수 있는 장점이 생겼다.
+
+처음에는 UserDao 안에 main 메소드를 사용해서 테스트 코드를 만들어 줬지만 UserDaoTest 라는 별개의 클래스를 만들어서 그 안에 테스트 코드를 넣도록 해서 확실히 분리하도록 하였다.
+
+*지속적인 개선과 점진적인 개발을 위한 테스트*
+
+UserDao 를 만들면서 UserDaoTest 를 통한 테스트는 개발에 대한 확신을 갖게 하였고, 새로운 기능을 추가하려 할 때도 미리 만들어 둔 테스트 코드는 유용하게 쓰였다. 
+
+*UserDaoTest 의 문제점*
+
+UserDaoTest 가 번거로운 수동 테스트에 비해 장점이 많은 것은 사실이지만 단점도 가지고 있다. 첫번째로 수동확인작업이 필요하다는 점이다. 결과 값을 출력해서 직접 확인해야만 했다. 검증해야하는 양이 많아질 수록 불편함을 느낄 수 있는 문제다.
+
+두번째로 실행작업의 번거로움이다. main 메소드라 하더라도 그것을 매번 실행하여야 하는 점은 DAO 가 많아 질 수록 그만큼 힘들어 질 것이다. 그래서 main 메소드를 이용하는 방법보다 좀 더 편리하고 체계적인 테스트를 실행하고 확인할 수 있도록 한다.
 
 
 == 2.2 UserDaoTest 개선 ==
 
+*테스트 검증의 자동화*
+
+add 메소드로 사용자를 등록하고 get 메소드를 통해 서로 일치하는지 확인하는 테스트 코드를 개선해보겠다. 기존의 코드에서는 값을 출력해서 직접 확인하였지만, 결과의 경우를 '테스트성공', '테스트실패' 로 두고 변경해보겠다.
+
+{{{
+if(!user.getName().equals(user2.getName())) {
+   System.our.println("테스트 실패 (name)");
+} else if(!user.getPassword().equals(user2.getPassword())) {
+   System.our.println("테스트 실패 (password)");
+} else {
+   System.our.println("테스트 성공");
+}
+}}}
+
+*JUnit 테스트로 전환*
+
+main 메소드로 만든 테스트는 테스트로서 필요한 기능은 모두 갖추었지만, main 메소드로는 한계가 있다. 그렇기 때문에 자바 테스팅 프레임워크가 불리는 JUnit 을 사용해보도록 한다.
+
+새로 만들 테스트는 JUnit 프레임웍이 요구하는 두 가지 조건을 따라야 한다. 첫번째는 메소드가 public 으로 선언되어야 하고, 다른 하나는 @Test 라는 애노테이션이 붙어야 한다는 것이다.
+
+{{{
+import org.juni.Test;
+...
+public class UserDaoTest {
+   @Test // 테스트용 메소드임을 알려주는 애노테이션
+   public void addAndGet() throws SQLException { // public 으로 선언
+      ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+      UserDao dao = context.getBean("userDao", UserDao.class");
+      ...
+      assertThat(user2.getName(), is(user.getName()));
+      assertThat(user2.getPassword(), is(user.getPassword()));  
+   }
+}
+}}}
+
+그리고 if/else 문 대신에 JUnit이 제공해주는 assertThat 이라는 스태틱 메소드를 이용해서 변경한다.
+
+이 테스트를 실행하기 위해 main 메소드를 추가하고 JUnitCore 클래스의 main 메소드를 호출해주는 간단한 코드를 넣어준다.
+
+{{
+import org.junit.runner.JUnitCore;
+...
+public static void main(String[] args) {
+   JUnitCore.main("springbook...UserDaoTest");
+}
+}}
+
+JUnit은 assertThat 을 이용해 검증을 했을 때 기대한 결과가 아닐 경우 AssertionError 를 던지므로, 테스트가 실패했음을 알 수 있다.
 
 == 2.3 개발자를 위한 테스팅 프레임워크 JUnit ==
 
+자바의 표준 테스팅 프레임웍이라 불리우는 JUnit 프레임웍에 대해 더 자세히 알아보도록 한다. IDE 를 통한 JUnit 테스트는 main 메소드가 필요없이 특정 메뉴를 통해 자동으로 실행된다. 한번에 여러 메소드 뿐만 아니라 여러 클래스에 대한 테스트도 동시에 실행할 수 있으며, 개발자 개인별로 테스트 할 때는 매우 유용하다.
+
+이클립스 JUnit 단축키 : alt + shift + x + t, 한번 실행후에는 f11
+
+*테스트 결과의 일관성*
+
+UserDaoTest를 사용하기 전에 USER 테이블의 모든 정보를 삭제해줘야 하는 번거로움이 있었다. 깜박하고 삭제하지 않았을 경우에는 테스트시가 의도하지 않게 실패할 것이다. 코드에 변경사항이 없다면 테스트는 항상 동일한 결과를 내야 하는 일관성을 가져야 한다. 그러므로 우리는 deleteAll, getCount 라는 메소드를 추가하여 일관성을 보장할 수 있는 테스트로 개선해보도록 한다.
+
+{{{
+@Test
+public void addAndGet() throws SQLException {
+   ...
+   dao.deleteAll();
+   assertThat(dao.getCount(), is(0)); // getCount 메소드는 deleteAll 에 대한 검증도 할 수 있다.
+   ...
+   dao.add(user);
+   assertThat(dao.getCount(), is(1));
+   ...
+}
+}}}
+
+*예외조건에 대한 테스트*
+
+get 메소드로 전달된 id 값에 해당하는 사용자 정보를 가져올 때 데이터가 없을 경우가 발생 할 수 있다. 그래서 데이터가 없을 경우 EmptyResultDataAccessException 예외를 던지도록 해본다. 이 경우 해당 예외가 던져졌을 때를 테스트 성공이라고 판단하도록 한다.
+
+{{{
+@Test(expected=EmptyResultDataAccessException.class) // expected 엘리먼트 추가
+public void getuserFailure() throws SQLException {
+   ...
+   UserDao dao = context.getBean("userDao", UserDao.class);
+   dao.deleteAll();
+   assertThat(dao.getCount(), is(0));
+   dao.get("unknown_id"); // 이 때 예외가 발생해야 한다.
+}
+}}}
+
+위 테스트가 성공하려면 UserDao 의 get 메소드에도 약간의 수정이 필요하다.
+
+{{{
+public User get(String id) throws SQLException {
+   ...
+   ResultSet rs = ps.executeQuery();
+   User user = null; // null 로 초기화
+   if(rs.next()) {
+      user = new User();
+      user.setId(rs.getString("id"));
+      ...
+   }
+   ...
+   if(user==null) throw new EmptyResultDataAccessException(1); // 예외를 던져준다
+   return user;
+}
+}}}
+
+*포괄적인 테스트*
+
+개발자가 테스트를 직접 만들 때 자주하는 실수가 하나 있다. 성공하는 테스트만 골라서 만드는 것이다. 스프링의 창시자인 로드존슨은 "항상 네거티브 테스트를 먼저 만들라" 라는 조언을 했다. 이렇게 부정적인 케이스를 먼저 만드는 습관을 들이는 것이 예외적인 상황을 빠뜨리지 않는 꼼꼼한 개발이 가능할 것이다.
+
+*테스트 주도 개발 (TDD)*
+
+get 메소드에 대한 예외 테스트를 만들 때 우리는 테스트를 먼저 작성하고, UserDao 의 get 메소드를 수정하는 순서로 진행하였다. 테스트를 통해 추가하고자 하는 기능을 코드로 표현하면서, 실제 기능을 가진 코드를 만들고 나면 테스트가 성공한 순간에 개발도 같이 작업완료가 될 것이다.
+
+이런 순서를 따라서, 검증해 줄 수 있는 테스트를 먼저 만들고, 테스트를 성공하게 해주는 코드를 작성하는 방식의 개발방법을 TDD 라고 한다. "실패한 테스트를 성공시키기 위한 목적이 아닌 코드는 만들지 않는다"는 TDD 의 기본 원칙이다.
 
 == 2.4 스프링 테스트 적용 ==
 
