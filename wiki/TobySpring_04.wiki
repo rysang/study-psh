@@ -25,14 +25,11 @@ public void deleteAll() {
 *예외 블랙홀*
 
  # 초난감 예외처리 코드 1
-
 {{{
 } catch (SQLException e) {
 }
 }}}
-
  # 초난감 예외처리 코드 2
-
 {{{
 } catch (SQLException e) {
    System.out.println(e);
