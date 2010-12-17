@@ -62,15 +62,15 @@ public void deleteAll() {
 
 예외의 종류에는 크게 3가지가 있다.
 
- 1. Error 
+1. Error 
 
 java.lang.Error 클래스의 서브클래스로, 시스템에 뭔가 비정상적인 상황이 발생했을 경우에 사용되며 주로 VM 에서 발생시키는 것이기 때문에 어플리케이션 코드에서는 특별한 신경을 쓰지 않아도 된다. OutOfMemoryError 나 ThreadDeath 같은 에러가 이에 해당한다.
 
- 2. Exception 과 체크 예외
+2. Exception 과 체크 예외
 
 Exception 을 상속받는 서브 클래스 중 RuntimeException 은 상속받지 않는 서브 클래스이다. 이런 체크 예외가 발생할 수 있는 메소드를 사용할 경우 반드시 예외처리가 필요하다. catch 문이나 throws 로 처리해줘야 컴파일 에러가 나지 않는다. IOException 이나 SQLException 이 이에 해당한다.
 
- 3. RuntimeException 과 언체크예외
+3. RuntimeException 과 언체크예외
 
 java.lang.RuntimeException 을 상속받은 예외들은 예외처리를 강제하지 않기 때문에 언체크예외라고 불린다. 또는 대표 클래스 이름을 따서 런타임예외라고도 불린다. 이 예외는 주로 프로그램의 오류가 있을 때 발생하도록 의도된 것들로 코드에서 미리 조건을 체크하도록 주의 깊게 만든다면 피할 수 있다. NullPointerException 이나 IllegalArgumentException 이 이에 해당한다.
 
@@ -78,9 +78,97 @@ java.lang.RuntimeException 을 상속받은 예외들은 예외처리를 강제�
 
 *예외처리 방법*
 
- 1. 예외 복구
+1. 예외 복구
 
+예외상황을 파악하고 문제를 해결해서 정상 상태로 돌려놓는 것이다. 예를 들어 파일을 읽으려 했는데 없을 경우 사용자에게 알려주고 다른 파일을 이용하도록 하는 것 처럼 예외로 인해 기본 작업 흐름이 불가능하면 다른 작업 흐름으로 자연스럽게 유도해주는 것이다.
+예외처리 코드를 강제하는 체크 예외들은 이렇게 예외를 어떤 식으로든 복구할 가능성이 있는 경우에 사용한다. API 를 사용하는 개발자로 하여금 예외상황이 발생할 수 있음을 인식하도록 도와주고 이에 대한 적절한 처리를 시도해보도록 요구하는 것이다.
 
- 2. 
+2. 예외처리 회피
+
+예외처리를 자신이 담당하지 않고 throws 문으로 자신을 호출한 쪽으로 던져버리는 것이다.
+jdbcContext 나 jdbcTemplate 이 사용하는 콜백 오브젝트는 SQLException 을 처리하는 일이 자신이 하는 역할이 아니라고 보기 때문에 템플릿으로 던져 버린다. 이처럼 예외를 회피하는 것은 의도가 분명해야 하며, 템플릿/콜백처럼 긴밀한 관계에 있는 다른 오브젝트에게 책임을 지게 하거나 자신을 사용하는 쪽에서 예외를 다루는게 최선의 방법이라는 분명한 확신이 있어야 한다.
+
+3. 예외 전환 exception translation
+
+예외처리와 마찬가지로 밖으로 던지지만 발생한 예외를 그대로 넘기는 게 아니라 적절한 예외로 전환해서 던지는 것이다. 이는 보통 두 가지 목적으로 사용된다.
+
+첫째는 내부에서 발생한 예외가 적절한 의미를 부여해주지 못해서 의미를 분명하게 해줄수 있는 예외로 바꿔주기 위해서다. 예를 들어 사용자 정보 등록 시 중복된 아이디가 문제가 될 때 SQLException 이 떨어지지만 이를 좀 더 의미있는 DuplicateKeyException 으로 전환해주는 것이다.
+
+{{{
+pubilc void add(User user) throws DuplicateUserIdException, SQLException {
+   try {
+      ...
+   } catch (SQLException e) {
+      if(e.getErrorCode() == MysqlErrorNumbers.ER_DUP_ENTRY) {
+         throws new DuplicateUserIdException(e); // 중첩 예외 1
+         // throws new DuplicateUserIdException().initCause(e); // 중첩 예외 2
+      } else throw e;
+   }
+}
+}
+}}}
+
+보통 전환하는 예외는 원래 발생한 예외를 담아서 중첩예외 nested exception 로 만드는 것이 좋다.
+
+두번째 방법은 예외를 처리하기 쉽고 단순하게 만들기 위해 포장하는 것이다. 주로 예외처리를 강제하는 체크 예외를 언체크 예외인 런타임 예외로 바꾸는 경우에 사용한다. 대표적인 예로 EJBException 을 들 수 있다. 런타임 예외이기 때문에 일일이 예외를 잡거나 다시 던지는 수고를 할 필요가 없다.
+
+{{{
+try {
+   ...
+} catch(NamingException ne) {
+   throw new EJBException(ne);
+} catch(SQLException se) {
+   throw new EJBException(se);
+} catch(RemoteException re) {
+   throw new EJBException(re);
+}
+}}}
+
+이런 예외는 잡아도 복구할 만한 방법이 없기 때문에 런타임 에러로 전환하는 것이 적절하지만 애플리케이션 로직상에서 예외조건이 발견되거나 예외상황이 발생할 수도 있는 의도적으로 던지는 예외는 체크예외를 사용하는 것이 적절하다. 비즈니스적인 의미가 있는 예외는 이에 대한 적절한 대응이나 복구 작업이 필요하기 때문이다.
+
+일반적으로 체크 예외를 계속 throws 를 사용해 넘기는건 무의미하다. 어차피 복구가 불가능한 예외라면 가능한 한 빨리 런타임 예외로 포장해 던지게 해서 다른 계층의 메소드를 작성할 때 불필요한 throws 선언이 들어가지 않도록 해줘야 한다.
+
+*예외처리 전략*
+
+자바 초기부터 있었던 JDK 의 API 와 달리 최근에는 API 가 발생시키는 예외를 체크 예외 대신 언체크 예외로 정의하는 것이 일반화 되고 있다. 항상 복구할 수 있는 예외가 아니라면 언체크 예외/런타임 예외로 던지도록 하는 것이다.
+
+add 메소드의 예외처리를 다시 살펴본다.
+
+{{{
+public class DuplicateUserIdException extends RuntimeException {
+   public DuplicateUserIdException(Throwable cause) {
+      super(cause);
+   }
+}
+}}}
+
+DuplicateUserIdException도 굳이 체크 예외로 둬야 하는 것은 아니다. 어디에서든 DuplicateUserIdException을 잡아서 처리할 수 있다면 굳이 체크 예외로 만들지 않고 RuntimeException 을 상속받아서 런타임예외로 만드는 것이 낫다. 대신 add 메소드는 명시적으로 DuplicateUserIdException 을 던진다고 선언해야 의미 있는 정보를 전달해줄 수 있다. 런타임 에러도 throws 로 선언할 수 있으니 문제 될 것은 없다.
+
+{{{
+public void add() throws DuplicateUserIdException {
+   try {
+      ...
+   } catch (SQLException e) {
+      if(e.getErrorCode() == MysqlErrorNumbers.ER_DUP_ENTRY) {
+         throws new DuplicateUserIdException(e); // 예외 전환
+      } else throw new RuntimeException(e); // 예외 포장
+   }  
+}
+}}}
+
+*애플리케이션 예외*
+
+런타임 예외 중심의 전략은 낙관적인 예외처리 기법이었다. 일단 잡고 보도록 강제하는 체크 예외는 비관적인 접근방법이었다.
+
+반면에 시스템 또는 외부의 예외상황이 아니라 애플리케이션 자체의 로직에 의해 의도적으로 발생시키고 반드시 catch 해서 무엇인가 조치를 취하도록 요구하는 애플리케이션 예외가 있다.
+
+이런 예외상황에 대해 리턴값을 달리 줘서 구분을 할 경우 표준의 정의가 필요하게 된다. 
+다른 방법으로 예외 상황에 따른 예외를 던지도록 만드는 것이다. 예외상황에 대한 처리는 catch 불록에 모아둘 수 있어 if 문을 남발하지 않을 수 있다. 이때 사용하는 예외는 의도적으로 체크 예외로 만든다.
+
+*SQLExcepion 은 어떻게 됐나?*
+
+SQLException 은 코드 레벨에서 복구할 방법이 없다. 그래서 스프링의 JdbcTemplate 는 템플릿과 콜백안에서 발생하는 모든 SQLExceptino 을 런타임 예외인 DataAccessException 으로 포장해서 던져준다. 그렇기 때문에 DAO 메소드에서 SQLException 이 모두 사라진 것이다.
+
+== 예외 전환 ==
 
 = 생각하기 =
