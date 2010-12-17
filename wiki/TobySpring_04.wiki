@@ -1,3 +1,42 @@
-#summary 토비의 스프링 1부 이해, 4장 예외
+#summary 토비의 스프링, 1부 이해 - 4장 예외
 
-ㄴㅇㄻㅇㄹㄴ
+<wiki:toc max_depth="2" />
+
+= 정리 =
+
+개요..
+
+== 4.1 사라진 SQL Exception ==
+
+3장에서 JdbcContext에서 JdbcTemplate를 적용하는 코드를 만든 후 각 메소드에서 예외처리의 차이점을 발견할 수 있다.
+
+{{{
+public void deleteAll() throws SQLException {
+   this.jdbcContext.executeSql("delete from users");
+}
+}}}
+
+{{{
+public void deleteAll() {
+   this.jdbcTemplate.update("delete from users");
+}
+}}}
+
+*예외 블랙홀*
+
+ # 초난감 예외처리 코드 1
+
+{{{
+} catch (SQLException e) {
+}
+}}}
+
+ # 초난감 예외처리 코드 2
+
+{{{
+} catch (SQLException e) {
+   System.out.println(e);
+}
+}}}
+
+= 생각하기 =
