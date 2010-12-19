@@ -169,7 +169,7 @@ public void add() throws DuplicateUserIdException {
 
 SQLException 은 코드 레벨에서 복구할 방법이 없다. 그래서 스프링의 JdbcTemplate 는 템플릿과 콜백안에서 발생하는 모든 SQLExceptino 을 런타임 예외인 DataAccessException 으로 포장해서 던져준다. 그렇기 때문에 DAO 메소드에서 SQLException 이 모두 사라진 것이다.
 
-== 예외 전환 ==
+== 4.2 예외 전환 ==
 
 예외전환의 목적은 두 가지이다.
 
@@ -274,3 +274,5 @@ JDBC 외의 기술을 사용할 때도 DuplicateKeyException 을 발생시키려
 
 
 = 생각하기 =
+
+지금하고 있는 프로젝트는 솔루션 성격이 없어서 Oracle 에 종속적인 DAO 를 가지고 있다. 그래서 SQL 에러가 나면 Oracle 의 ORA
