@@ -467,10 +467,40 @@ UserService 에 JDBC 의 Connection 메소드를 직접 사용하는 트랜잭�
 
 == 5.4 메일 서비스 추상화 ==
 
-||  UserService                            ||      
-||  MailSender                             || 
-|| DummyMailService || JavaMailServiceImpl ||
-|| ...              || JavaMail            ||
+스프링에서 제공하는 MailSender 인터페이스를 통해 테스트할 때 유용하게 쓰일 수 있다.
+
+{{{
+public class UserService {
+   ...
+   private MailSender mailSender;
+   public void setMailSender(MailSender mailSender) {
+      this.mailSender = mailSender;
+   }
+   ...
+}
+}}}
+
+{{{
+<bean id="userService" class="springbook...UserService">
+   ...
+   <property name="mailSender" ref="mailSender" />
+</bean>
+<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+   <property name="host" value="..." />
+   ...
+</bean>
+}}}
+
+테스트 용 
+
+{{{
+<bean id="mailSender" class="springbook...DummyMailSender">
+}}}
+
+이렇게 스프링의 MailSender 를 이용하게 되면 JavaMail 이 아닌 다른 메시징 서버의 API 를 이용할 때도 MailSender 구현 클래스를 만들어서 DI 해주면 되는 장점이 생겨난다.
+
+*테스트 대역*
+
 
 
 = 생각하기 =
