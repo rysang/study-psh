@@ -491,7 +491,7 @@ public class UserService {
 </bean>
 }}}
 
-테스트 용 
+테스트 용 설정파일
 
 {{{
 <bean id="mailSender" class="springbook...DummyMailSender">
@@ -501,6 +501,48 @@ public class UserService {
 
 *테스트 대역*
 
+ * 의존 오브젝트의 변경을 통한 테스트 방법
 
+테스트 대상이 되는 코드를 수정하지 않고 UserService 자체에 대한 테스트에 지장을 주지 않기 위해 도입한 DummyMailSender 처럼 아무런 기능도 없지만 UserService 가 반드시 이용해야 하는 의존 오브젝트의 역할을 해주면서 원할하게 테스트 중에 UserService 의 코드가 실행되게 해준다. 이 같은 의존오브텍트를 협력오브젝트 collaborator 라고도 한다. 
+
+ * 테스트 대역의 종류와 특징
+
+이렇게 테스트용으로 사용되는 특별한 오브젝트 들이 있다. 대부분 테스트 대상인 오브젝트의 의존 오브젝트가 되는 것들인데 UserDao 의 DataSource나 UserService 의 MailSender 인터페이스를 구현한 것들이다.  이런 오브젝트를 통틀어 테스트 대역 test double 이라고 부른다.
+
+대표적인 테스트 대역은 테스트 스텁 test stub 이다. 일반적으로 테스트 스텁은 메소드를 통해 전달하는 파라미터와 달리 테스트 코드 내부에서 간접적으로 사용된다. 따라서 DI 를 통해 미리 의존 오브젝트를 테스트 스텁으로 변경해야 한다. DummyMailSender 가 테스트 스텁의 한 예다.
+
+테스트 대상 오브젝트의 메소드가 돌려주는 결과 뿐 아니라 테스트 오브젝트가 간접적으로 의존 오브젝트에 넘기는 값과 그 행위 자체에 대해서도 검증하고 싶다면 테스트 대상의 간접적인 출력 결과를 검증하고 테스트 대상 오브젝트와 의존 오브젝트 사이에서 일어나는 일을 검증할 수 있도록 특별히 설계된 목 오브젝트 mock object 를 사용해야 한다. 
+
+ * 목 오브젝트를 이용한 테스트
+
+{{{
+static class MockMailSendeer implements MailSender {
+   private List< String > requests = new ArrayList< String >();
+   public List< String > getRequests() {
+      return requests;
+   }
+   public void send(SimpleMailMessage mailMessage) throws MailException {
+      requests.add(mailMessage.getTo()[0]);
+   }
+   public void send(SimpleMailMessage[] mailMessage) throws MailException { }
+}
+}}}
+
+목 오브젝트로 만든 메일 전송 확인용 클래스이다. 테스트 스텁 처럼 메일을 발송 하는 기능은 없지만 관련 정보를 저장해두는 기능이 있다. 다음과 같이 테스트에서 MockMailSender 오브젝트로부터 UserService 사이에 일어난 일에 대한 결과를 검증할 수 있다.
+
+{{{
+@Test
+@DirtiesContext
+public void upgradeLevels() throws Exception {
+   ...
+   MockMailSender mockMailSender = new MockMailSender();
+   userService.setMailSender(mockMailSender);
+   ...
+   List< String > request = mockMailSender.getRequests();
+   assertThat(request.size(), is(2));
+   assertThat(request.get(0), is(users.get(1).getEmail()));
+   assertThat(request.get(1), is(users.get(3).getEmail())));
+}
+}}}
 
 = 생각하기 =
