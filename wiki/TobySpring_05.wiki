@@ -467,6 +467,10 @@ UserService 에 JDBC 의 Connection 메소드를 직접 사용하는 트랜잭�
 
 == 5.4 메일 서비스 추상화 ==
 
+||  UserService                            ||      
+||  MailSender                             || 
+|| DummyMailService || JavaMailServiceImpl ||
+|| ...              || JavaMail            ||
 
 
 = 생각하기 =
