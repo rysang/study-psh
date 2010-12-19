@@ -445,9 +445,9 @@ public class UserService {
 
 트랜잭션의 추상화는 애플리케이션의 비즈니스 로직과 그 하위에서 동작하는 로우레벨의 트랜잭션 기술이라는 아예 다른 계층의 특성을 갖는 코드를 분리한 것이다. 
 
-UserService -> UserDao            || 애플리케이션 계층
-TransactionManagger -> DataSource || 서비스 추상화 계층
-JDBC, JTA, JNDI, WAS, Database .. || 기술 서비스 계층
+|| UserService -> UserDao            || 애플리케이션 계층  ||
+|| TransactionManagger -> DataSource || 서비스 추상화 계층 ||
+|| JDBC, JTA, JNDI, WAS, Database .. || 기술 서비스 계층   ||
 
 이렇게 애플리케이션 로직의 종류에 따른 수평적인 구분이든, 로직과 기술이라는 수직적인 구분이든 모두 결합도가 낮으며 서로 영향을 주지 않고 자유롭게 확장될 수 있는 구조를 만들 수 있는 데는 스프링의 DI 가 중요한 역할을 하고 있다.
 
