@@ -19,7 +19,7 @@ after-throwing 으로 선언되어 특정 메소드가 수행 중 예외사항�
    </aop:config>
 }}} 
 
-='UserServiceImpl'.java=
+={{{UserServiceImpl}}}.java=
 
 해당 클래스의 getUser 메소드는 AOP 에서 정의한 pointcut 표현식에 부합하며 사용자 정보가 없을 경우 예외를 발생시킨다.
 
