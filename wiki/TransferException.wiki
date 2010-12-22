@@ -15,8 +15,9 @@ after-throwing 으로 선언되어 특정 메소드가 수행 중 예외사항�
 
    <aop:config>
       <aop:aspect ref="exceptionTransfer">
-         <aop:pointcut id="getMethods" expression="execution(public * integration.anyframe.services..*Impl.get*(..))" /> // 적용대상 메소드 설정
-         <!--// exception 매개변수의 예외 타입으로 예외 발생 시 transfer 메소드 호출 -->
+         <!--// 적용대상 메소드 설정 -->
+         <aop:pointcut id="getMethods" expression="execution(public * integration.anyframe.services..*Impl.get*(..))" />
+          <!--// exception 매개변수의 예외 타입으로 예외 발생 시 transfer 메소드 호출 -->
          <aop:after-throwing method="transfer" throwing="exception" pointcut-ref="getMethods" />       
       </aop:aspect>
    </aop:config>
