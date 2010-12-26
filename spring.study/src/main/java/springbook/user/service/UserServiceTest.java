@@ -97,7 +97,9 @@ public class UserServiceTest {
 			System.out.println("fail");
 			
 		}
-		checkLevelUpgraded(users.get(1), false);
+		for(User user : users) System.out.println("for:"+user.getId()+","+user.getLevel());
+		System.out.println("users.get(1).getId():"+users.get(1).getId());
+		checkLevelUpgraded(users.get(3), false);
 	}
 	
 	@Test
@@ -164,16 +166,17 @@ public class UserServiceTest {
 	
 	@Test
 	public void advisorAutoProxyCreator() throws Exception {
-		//assertEquals(userService.getClass(), java.lang.reflect.Proxy.class);
+		assertEquals(userService.getClass(), java.lang.reflect.Proxy.class);
 		//assertThat(testUserService.getClass(), is(java.lang.reflect.Proxy.class));
 	}
 	
 	static class TestUserServiceImpl extends UserServiceImpl {
-		private String id = "111";
+		private String id = "shiny";
 		protected void upgradeLevel(User user) {
-			System.out.println("upgradeLevel : "+user.getId());
+			System.out.println("upgradeLevel : "+user.getId()+","+user.getLevel());
 			if(user.getId().equals(this.id)) { System.out.println("here"); throw new TestUserServiceException(); }
 			super.upgradeLevel(user);
+			System.out.println("after : "+user.getId()+","+user.getLevel());
 		}
 	}
 	
