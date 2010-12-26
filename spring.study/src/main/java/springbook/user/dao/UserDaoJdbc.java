@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -39,10 +40,13 @@ public class UserDaoJdbc implements UserDao{
 	
 	
 	public void add(final User user) {
-		this.jdbcTemplate.update("insert into users(id, name, password) values (?, ?, ?)"
+		this.jdbcTemplate.update("insert into users(id, name, password, level, login, recommend) values (?, ?, ?, ?, ?, ?)"
 			, user.getId()
 			, user.getName()
-			, user.getPassword());
+			, user.getPassword()
+			, user.getLevel().intValue()
+			, user.getLogin()
+			, user.getRecommend());
 	}
 
 	public User get(String id) {
@@ -66,13 +70,13 @@ public class UserDaoJdbc implements UserDao{
 	}
 
 	public void update(User user) {
-		this.jdbcTemplate.update("update users set name = ?, password = ?, level = ?, login = ?, recommend = ?"
+		this.jdbcTemplate.update("update users set name = ?, password = ?, level = ?, login = ?, recommend = ? where id = ?"
 				, user.getName()
 				, user.getPassword()
-				, user.getLevel()
+				, user.getLevel().intValue()
 				, user.getLogin()
-				, user.getRecommend());
+				, user.getRecommend()
+				, user.getId());
 	}
-	
 	
 }
