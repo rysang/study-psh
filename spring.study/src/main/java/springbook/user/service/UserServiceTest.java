@@ -1,8 +1,10 @@
 package springbook.user.service;
 
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.*;
 import static springbook.user.service.UserServiceImpl.*;
 
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,7 +14,9 @@ import javax.sql.DataSource;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.mail.MailSender;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -27,20 +31,24 @@ import springbook.user.domain.User;
 @ContextConfiguration(locations="/test-applicationContext.xml")
 public class UserServiceTest {
 	@Autowired
-	UserServiceImpl userService;
-	@Autowired
 	UserDao userDao;
 	@Autowired
 	PlatformTransactionManager transactionManager;
 	@Autowired
 	MailSender mailSender;
 	@Autowired
-	UserServiceImpl userServiceImpl;
+	UserService userService;
+	@Autowired
+	UserService testUserService;
+	@Autowired
+	ApplicationContext context;
 
 	List<User> users;
 	
 	@Before
 	public void setUp() {
+		System.out.println("userService:"+userService);
+		System.out.println("testUserService:"+testUserService);
 		users= Arrays.asList(
 			new User("want813", "psh", "1111", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER-1, 0),
 			new User("shiny", "shiny", "1111", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER, 0),
@@ -69,26 +77,21 @@ public class UserServiceTest {
 		
 	}
 	
+	
 	private void checkUserAndLevel(User updated, String expectedId, Level expectedLevel) {
 		assertEquals(updated.getId(), expectedId);
 		assertEquals(updated.getLevel(), expectedLevel);
 	}
 
 	@Test
+	@DirtiesContext
 	public void upgradeAllOrNothing() throws Exception {
-		TestUserService testUserserice = new TestUserService(users.get(3).getId());
-		testUserserice.setUserDao(this.userDao);
-		testUserserice.setMailSender(this.mailSender);
-		
-		UserServiceTx txUserService = new UserServiceTx();
-		txUserService.setTransactionManager(transactionManager);
-		txUserService.setUserService(testUserserice);
 		
 		userDao.deleteAll();
 		for(User user : users) userDao.add(user);
 		
 		try {
-			txUserService.upgradeLevels();
+			testUserService.upgradeLevels();
 			fail("TestUserServiceException expected");
 		} catch(TestUserServiceException e) {
 			System.out.println("fail");
@@ -156,6 +159,25 @@ public class UserServiceTest {
 		public int getCount() {
 			throw new UnsupportedOperationException();
 		}
+		
+	}
+	
+	@Test
+	public void advisorAutoProxyCreator() throws Exception {
+		//assertEquals(userService.getClass(), java.lang.reflect.Proxy.class);
+		//assertThat(testUserService.getClass(), is(java.lang.reflect.Proxy.class));
+	}
+	
+	static class TestUserServiceImpl extends UserServiceImpl {
+		private String id = "111";
+		protected void upgradeLevel(User user) {
+			System.out.println("upgradeLevel : "+user.getId());
+			if(user.getId().equals(this.id)) { System.out.println("here"); throw new TestUserServiceException(); }
+			super.upgradeLevel(user);
+		}
+	}
+	
+	static class TestUserServiceException extends RuntimeException {
 		
 	}
 }

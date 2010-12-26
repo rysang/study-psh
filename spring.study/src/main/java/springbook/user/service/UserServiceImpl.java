@@ -76,22 +76,7 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 	
-	static class TestUserService extends UserServiceImpl {
-		private String id;
-		TestUserService(String id) {
-			this.id = id;
-		}
-		
-		protected void upgradeLevel(User user) {
-			System.out.println("upgradeLevel");
-			if(user.getId().equals(this.id)) { System.out.println("here"); throw new TestUserServiceException(); }
-			super.upgradeLevel(user);
-		}
-	}
 	
-	static class TestUserServiceException extends RuntimeException {
-		
-	}
 	
 	
 }
