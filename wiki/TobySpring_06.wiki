@@ -314,6 +314,125 @@ public void upgradeAllOrNothing() throws Exception {
 }
 }}}
 
+*다이내믹 프록시를 위한 팩토리 빈*
+
+다이내믹 프록시를 이용해서 UserService 를 구성해봤지만 이를 DI 할 수가 없는 문제점이 발생했다. 스프링에서는 클래스 정보를 가지고 디폴트 생성자를 통해 오브젝트를 만드는 방법 외에도 팩토리 빈을 이용한 생성방법이 있다. 팩토리 빈은 스프링을 대신해서 오브젝트의 생성로직을 담당하도록 만들어진 특별한 빈을 말한다.
+
+{{{
+public class Message {
+   String text;
+   private Message(String text) { this.text = text; }
+   public String getText() { return text; }
+   public static Message newMessage(String text) { return new Message(text); }
+}
+}}}
+
+{{{
+public class MessageFactoryBean implements FactoryBean<Message> {
+   String text;
+   public void setText(String text) { this.text = text; }
+   public Message getObject() throws Exception {
+      return Message.newMessage(this.text);
+   }
+   public Class<? extends Message> getObjectType() {
+      return Message.class;
+   }
+   public boolean isSingleton() { return false; }
+}
+}}}
+
+{{{
+<bean id="message" class="springbook...MessageFactoryBean">
+   <property name="text" value="Factory Bean" />
+</bean>
+}}}
+
+{{{
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration
+public class FactoryBeanTest {
+   @Autowired
+   ApplicationContext context;
+   @Test
+   public void getMessageFromFactoryBean() {
+      Object message = context.getBean("message");
+      assertThat(message, is(Message.class)); // 타입이 MessageFactoryBean 이 아닌 getObject 의 리턴값인 Message 이다.
+      ...
+      Object factory = context.getBean("&message"); // MessageFactoryBean 자체를 리턴
+      assertThat(factory, is(MessageFactoryBean.class)); 
+   }
+}
+}}}
+
+TransactionHandler를 이용하는 다이내믹 프록시를 생성하는 팩토리 빈 클래스를 만들어 본다.
+
+{{{
+public class TxProxyFactoryBean implements FactoryBean<Object> { // 범용적으로 사용
+   private Object target;
+   private PlatformTransactionManager;
+   private String pattern;
+   Class<?> serviceInterface;
+
+   public void setTarget(Object target) { this.target = target; }
+   public void setTransactionManager(PlatformTransactionManager transactionManager) { this.transactionManager = transactionManager; }
+   public void setPattern(String pattern) { this.pattern = pattern; }
+   public void setServiceInterface(Class<?> serviceInterface) { this.serviceInterface = serviceInterface;
+
+   public Object getObject() throws Exception {
+      TransactionHandler txHandler = new TransactionHandler();
+      txHandler.setTarget(target);
+      txHandler.setTransactionManager(transactionManager);
+      txHandler.setPattern(pattern);
+      return Proxy.newProxyInstance(
+         getClass().getClassLoader(),
+         new Class[] { serviceInterface },
+         txHandler);
+   }
+
+   public Class<?> getObjectType() {
+      return serviceInterface;
+   }
+
+   public boolean isSingletom() { return false; }
+}
+}}}
+
+{{{
+<bean id="userService" class="springbook...TxProxyFactoryBean">
+   <property name="target" ref="userServiceImpl" />
+   <property name="transactionManager" ref="transactionManager" />
+   <property name="pattern" value="upgradeLevels" />
+   <property name="serviceInterface" value="springbook...UserService" />
+</bean>
+}}}
+
+테스트의 upgradeAllOrNothing 메소드는 수동 DI 를 통해 직접 다이내믹 프록시를 만들어서 사용하니 팩토리 빈이 적용되지 않는다. 그래서 빈으로 등록된 TxProxyFactoryBean 을 가져와서 프록시를 만들어 볼 수 있다.
+
+{{{
+public class UserServiceTest {
+   ...
+   @Autowired ApplicationContext context;
+   ...
+   @Test
+   @DirtiesContext
+   public void upgradeAllOrNothing() throws Exception {
+      ...
+      TxProxyFactoryBean txProxyFactoryBean = context.getBean("&userService", TxProxyFactoryBean.class);
+      txProxyFactoryBean.setTarget(testUserServiceImpl);
+      UserService txUserService = (UserService) txProxyFactoryBean.getObject();
+      ...
+   }
+}}}
+
+프록시 팩토리 빈을 사용해서 타깃 인터페이스를 구현하는 클래스를 일일이 만드는 번거로움을 제거했다. 하나의 핸들러 메소드를 구현하는 것만으로 수많은 메소드에 부가기능을 부여해줄 수 있으니 부가기능 코드의 중복 문제도 사라졌다. 
+
+하지만 프록시를 통해 타깃에 부가기능을 제공하는 것은 메소드 단위로 일어나는 일으로 하나의 클래스 안에 존재하는 여러 개의 메소드에 부가기능을 한 번에 제공하는 건 어렵지 않았지만 한 번에 여러개의 클래스에 공통적인 부가기능을 제공할 수는 없다.
+
+또한 하나의 타깃에 여러개의 부가기능을 적용할 수 없다.
+
+그리고 TransactionHandler 오브젝트가 프로시 팩토리 빈 개수만큼 만들어지는 문제점이 있다. TransactionHandler 는 타깃 오브젝트를 프로퍼티로 갖고 있기 때문에 트랙잭션 부가기능을 제공하는 동일한 코드임에도 불구하고 타깃 오브젝트가 달라지면 새로운 TransactionHandler 오브젝트를 만들어내야 한다.
+
+
 == 6.4 스프링의 프록시 팩토리 빈 ==
 
 == 6.5 스프링 AOP ==
