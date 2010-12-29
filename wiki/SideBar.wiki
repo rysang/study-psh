@@ -7,6 +7,8 @@
   * [http://code.google.com/p/study-psh/wiki/TobySpring_03 3장 템플릿]
   * [http://code.google.com/p/study-psh/wiki/TobySpring_04 4장 예외]
   * [http://code.google.com/p/study-psh/wiki/TobySpring_05 5장 서비스 추상화]
+  * [http://code.google.com/p/study-psh/wiki/TobySpring_06 6장 AOP]
+
 
 
 
