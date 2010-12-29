@@ -5,7 +5,180 @@
 
 == 6.1 트랜잭션 코드의 분리 ==
 
+upgradeLevels 메소드는 다음과 같이 구성되어 있다.
+
+{{{
+public void upgradeLevels() throws Exception {
+   // 트랜잭션경계설정
+
+   // 비즈니스 로직
+
+   // 트랜잭션경계설정
+}
+}}}
+
+트랜잭션 경계설정 부분을 클래스로 빼고, 이를 DI 의 실제 사용할 오브젝트 클래스를 감추고 인터페이스를 통해 간접적으로 접근하게 하는 개념을 이용해본다.
+
+UserService 인터페이스로 만들고 기존의 소스는 UserService 를 구현하면서 비즈니스로직만 담고 있는  UserServiceImpl 클래스로 만든다. 그리고 UserService 를 구현하면서 트랜잭션경계설정만 담고 있는 UserServiceTx 클래스도 만든다. 그래서 UserServiceTx 에게 실제적인 로직 처리 작업을 위임한다.
+
+{{{
+public class UserServiceTx implements UserService {
+   UserService userService;
+   public void setUserService(UserService userService) {
+      this.userService = userService;
+   }
+
+   PlatformTransactionManager transactionManager;
+   public void setTransactionManager(PlatformTransactionManager transactionManager) {
+      this.transactionManager = transactionManager;
+   }
+
+   public void add(User user) { userService.add(user); }
+ 
+   public void upgradeLevels(User user) { 
+      TransactionStatus status = this.transactionManager.getTransaction(new DefaultTransactionDefinition());
+      try {
+         userService.upgradeLevels(); 
+         this.transactionManager.commit(status);
+      } catch (RuntimeException e) {
+         this.transactionManager.rollback(status);
+         throw e;
+      }
+   }
+}
+}}}
+
+기능을 분리 후 구성관계는 다음과 같다.
+
+Client(UserServiceTest) -> UserServiceTx -> UserServiceImpl
+
+xml 설정파일도 다음과 같이 수정한다.
+
+{{{
+<bean id="userService" class="springbook...UserServiceTx">
+   <property name="transactionManager" ref="transactionManager" />
+   <property name="userService" ref="userServiceImp;" />
+</bean>
+<bean id="userServiceImpl" class="springbook...UserServiceImpl">
+   <property name="userDao" ref="userDao" />
+   <property name="mailSender" ref="mailSender" />
+</bean>
+}}}
+
+TestUserSerivce 는 UserServiceImpl 을 상속받도록 수정한다.
+
+{{{
+static class TestUserSerivce extends UserServiceImpl {
+   ...
+}
+}}}
+
+UserServiceTest를 수정한다.
+
+{{{
+@Autowired
+UserService userService; // type 이 두개 존재하면 이름으로 찾는다.
+@Autowired
+UserServiceImpl userServiceImpl;
+
+@Test
+public void upgradeAllOrNothing() throws Exception {
+   TestUserService testUserService = new TestUserService(users.get(3).getId());
+   testUserService.setUserDao(userDao);
+   testUserService.setMailSender(mailSender);
+
+   UserServiceTx txUserService = new UserServiceTx();
+   txUserService.setTransactionManager(transactionManager);
+   txUserService.setUserService(testUserService);
+
+   ...
+   try {
+      txUserService.upgradeLevels();
+      fail("TestUserServiceException expected");
+   }
+   ...
+}}}
+
+
 == 6.2 고립된 단위 테스트 ==
+
+UserServiceTest 라는 테스트 대상이 테스트 단위인 것처럼 보이지만 사실은 그 뒤의 의존관계를 따라 등장하는 오브젝트와 서비스, 환경이 모두 합쳐져 테스트 대상이 되고 있는 것이다. 그래서 테스트의 대상, 환경 등에 종속되고 영향 받지 않도록 고립시킬 필요가있다. MockMailSender 를 이용한 것 처럼 MockUserDao 를 만들어서 사용한다.
+
+{{{
+static class MockUserDao extends UserDao {
+   private List<User> users;
+   private List<User> updated = new ArrayList();
+
+   private MockUserDao(List<User> users) { this.users = users; }
+   private List<User> getUpdated() { return this.updated; }
+
+   public List<User> getAll() { return this.users; }
+   public void update(User user) { updated.add(user); }
+
+   public void add(User user) { throw new UnsupportedOperationException(); }
+   ...
+}
+}}}
+
+{{{
+@Test
+public void upgradeLevels() throws Exception {
+   UserServiceImpl userServiceImpl = new UserServiceImpl();
+
+   MockUserDao mockUserDao = new MockUserDao(this.users);
+   userServiceImpl.setUserDao(mockUserDao);
+ 
+   MockMailSender mockMailSender = new MockMailSender();
+   userServiceImppl.setMailSender(mockMailSender);
+
+   userServiceImpl.upgradeLevels();
+
+   List<User> updated = mockUserDao.getUpdated();
+   assertThat(updated.size(), is(2));
+
+   ...
+}
+}}}
+
+앞으로 '테스트 대상 클래스를 목 오브젝트 등의 테스트 대역을 이용해 의존 오브젝트나 외부의 리소스를 사용하지 않도록 고립시켜서 테스트하는 것'을 단위 테스트라고 보고, 2개 이상의 성격이나 계층이 다른 오브젝트가 연동하도록 만들어 테스트 하거나, 외부의 DB 나 파일, 서비스 등의 리소스가 참여하는 2개 이상의 단위가 결합해서 동작하는 테스트를 통합 테스트라고 보겠다.
+
+항상 단위 테스트를 먼저 고려해야 하며 DAO 테스트는 DB 외부 리소스를 사용하기 때문에 통합테스트로 분류된다. 스프링 테스트 컨텍스트 프레임워크를 이용하는 테스트는 통합 테스트이다.
+
+*목 프레임워크*
+
+목 프레임웍 중 Mockito 프레임워크는 콕 클래스를 일일이 준비해둘 필요가 없다. 다음과 같이 스태틱 메소드인 mock 으로 호출하게 한다.
+
+{{{
+UserDao mockUserDao = mock(UserDao.class);
+when(mockUserDao.getAll()).thenReturn(this.users); // 스텁 기능 추가
+verify(mockUserDao, times(2)).update(any(User.class)); // 두번 호출됐는지 확인
+}}}
+
+{{{
+@Test
+public void mockUpgradeLevels() throws Exception {
+   UserServiceImpl userServiceImpl = new UserServiceImpl();
+   
+   UserDao mockUserDao = mock(UserDao.class);
+   when(mockUserDao.getAll()).thenReturn(this.users);
+   userServiceImpl.setUserDao(mockUserDao);
+
+   MailSender mockMailSender = mock(MailSender.class);
+   userServiceImp.setMailSender(mockMailSender);
+
+   ...
+   
+   verify(mockUserDao, times(2)).update(any(User.class));
+   ...
+
+   // 전달된 파라미터를 가져와 내용을 검증
+   ArgumentCaptor<SimpleMessage> mailMessageArg = ArgumentCaptor.forClass(SimpleMessage.class);
+   verify(mockMailSender, times(2)).send(mailMessageArg.capture());
+   List<SimpleMailMessage> mailMessages = mailMessageArg.getAllValues();
+   assertThat(mailMessages.get(0).getTo()[0], is(users.get(1).getEmail()));
+   ...
+}
+}}}
 
 
 == 6.3 다이내믹 프록시와 팩토리 빈 ==
