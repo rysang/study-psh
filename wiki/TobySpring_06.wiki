@@ -183,6 +183,136 @@ public void mockUpgradeLevels() throws Exception {
 
 == 6.3 다이내믹 프록시와 팩토리 빈 ==
 
+트랜잭션 부가기능과 비즈니스 로직 핵심기능을 분리하고 클라이언트에서 부가기능을 가진 클래스를 이용하고, 해당 클래스에서 다시 비즈니스 로직을 가진 핵심기능을 사용하는 구조가 되었다.
+
+만약 클라이언트가 핵심기능을 가진 클래스를 직접 사용한다면 부가기능이 적용될 기회가 없게 된다. 그래서 부가기능을 가진 클래스는 핵심기능을 가진 클래스와 같은 인터페이스를 구현해서 클라이언트와 핵심기능을 가진 클래스 사이에 마치 자신이 핵심기능을 가진 클래스인 것 처럼 끼어들어야 한다. 
+
+이렇게 마치 자신이 클라이언트가 사용하려고 하는 실제 대상인 것처럼 위장해서 클라이언트의 요청을 받아주는 것을 프록시라고 부르며, 프록시를 통해 최종적으로 요청을 위임받아 처리하는 실제 오브젝트를 타깃이라고 부른다.
+
+프록시의 사용 목적은 두 가지로 구분할 수 있다. 첫째, 클라이언트가 타깃에 접근하는 방법을 제어하기 위해서다. 두 번째는 타깃에 부가적인 기능을 부여해주기 위해서이다. 이 두 가지 목적에 따라서 디자인 패턴에서는 다른 패턴으로 구분한다.
+
+*데코레이터 패턴*
+
+타깃에 부가적인 기능을 런타임 시 다이내믹하게 부여해주기 위해 프록시를 사용하는 패턴이다. 대표적인 예로 BufferedInputStream 이 있다. 트랜잭션 부가기능을 부여해준 UserServiceTx 도 이에 속한다.
+
+{{{
+   InputStream is = new BufferedInputStream(new FileInputStream("a.txt"));
+}}}
+
+*프록시 패턴*
+
+프록시를 사용하는 방법 중에서 타깃에 대한 접근 방법을 제어하려는 목적을 가진 경우다. add 메소드에서 UpsupportedOperationException 예외가 발생하게 한 것도 접근권한 제어용 프록시라고 볼 수 있다.
+
+*다이내믹 프록시*
+
+프록시는 기존 코드에 영향을 주지 않으면서 타깃의 기능 확장, 접근 방법을 제어할 수 있는 유용한 방법이지만 일일이 모든 인터페이스를 구현해서 클래스를 새로 정의해야 하는 불편함이 있다.
+
+프록시는 타깃오브젝트로 위임하는 기능과 부가기능 수행으로 기능이 나뉠 수 있다. 이 때 부가기능 코드가 중복될 가능성이 많으며, 일일이 만들어 줘야 하는 단점을 JDK 의 java.lang.reflect 리플렉션기능을 이용해서 해결할 수 있다.
+
+다이내믹 프록시는 이런 리플렉션 기능을 이용해서 프록시를 만들어준다. 이는 자바의 코드 자체를 추상화해서 접근하도록 만든 것이다.
+
+{{{
+public class RelectionTest {
+   @Test
+   public void invokeMethod() throws Exception {
+      String name = "Spring";
+      
+      assertThat(name.length(), is(6));
+      Method lengthMethod = String.class.getMethod("length");
+      assertThat((Integer)lengthMethod.invoke(name), is(6));      
+   }
+}
+}}}
+
+다이내믹 프록시를 이용한 프록시를 만들어 본다.
+
+{{{
+interface Hello { // 인터페이스
+   String sayHello(String name);
+   String sayHi(String name);
+   String sayThankYou(String name);
+}
+}}}
+
+{{{
+public class HelloTarget implements Hello { // 구현 클래스
+   public String sayHello(String name) { return "Hello" + name; }
+   public String sayHi(String name) { return "Hi" + name; }
+   public String sayThankYou(String name) { return "ThankYou" + name; }
+}
+}}}
+
+{{{
+public class UppercaseHandler implements InvocationHandler { // InvocationHandler 구현
+   Object target;
+   private UppercaseHandler(Object target) { this.target = target; }
+   public Object invoke(Object proxy, Method method, Object[] args) throws Throwble {
+      Object ret = method.invoke(target, args);
+      if(ret instanceof String) { // 리턴타입이 String 인 경우에만
+         return ((String)ret).toUpperCase(); // 대문자로 변경
+      } else { return ret; }
+   }
+}
+}}}
+
+{{{
+Hello proxiedHello = (Hello) Proxy.newProxyInstance(
+   getClass().getClassLoader(), // 클래스 로더
+   new Class[] { Hello.class }, // 구현할 인터페이스의 배열
+   new UppercaseHandler(new HelloTarget())); // 부가기능과 위임코드를 담은 InvocationHandler 
+}}}
+
+InvocationHandler 로 인해 어떤 종류의 인터페이스를 구현한 타깃이든 상관없이 재사용할 수 있고, 호출하는 메소드의 이름, 파라미터 개수와 타입, 리턴 타입등의 정보를 가지고 부가적인 기능을 적용할 메소드를 선택할 수 있다. 
+
+*다이내믹 프록시를 이용한 트랜잭션 부가기능*
+
+{{{
+public class TransactionHandler implements InvocationHandler {
+   private Object target;
+   private PlatformTransactionManager;
+   private String pattern;
+
+   public void setTarget(Object target) { this.target = target; }
+   public void setTransactionManager(PlatformTransactionManager transactionManager) { this.transactionManager = transactionManager; }
+   public void setPattern(String pattern) { this.pattern = pattern; }
+
+   public Object invoke(Object proxy, Method method, Object[] args) throws Throwble {
+      if(method.getName().startsWith(pattern)) {
+         return invokeInTransaction(method, args);
+      } else {
+         return method.invoke(target, args);
+      }
+   }
+
+   private Object invokeInTransaction(Method method, Object[] args) throws Throwble {
+      TransactionStatus status = this.transactionManager.getTransaction(new DefaultTransactionDefinition());
+      try {
+         Object ret = method.invoke(target, args);
+         this.transactionManager.commit(status);
+         return ret;
+      } catch (InvocationTargetException e) { // InvocationTargetException 으로 포장되서 전달됨
+         this.transactionManager.rollback(status);
+         throw e.getTargetException();
+      }
+   }
+}
+}}}
+
+{{{
+@Test
+public void upgradeAllOrNothing() throws Exception {
+   ...
+   TransactionHandler txHandler = new TransactionHandler();
+   txHandler.setTarget(testUserService);
+   txHandler.setTransactionManager(transactionManager);
+   txHandler.setPattern("upgradeLevels");
+   UserService txUserService = (UserService) Proxy.newProxyInstance(
+      getClass().getClassLoader(),
+      new Class[] { UserService.class }, 
+      txHandler);
+   ...
+}
+}}}
 
 == 6.4 스프링의 프록시 팩토리 빈 ==
 
