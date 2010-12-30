@@ -65,4 +65,13 @@ public class User {
 		return level;
 	}
 	
+	public void upgradeLevel() {
+		Level nextLevel = this.level.nextLevel();
+		if(nextLevel == null) {
+			throw new IllegalAccessError(this.level + "¾ÈµÅ ");
+		} else {
+			this.level = nextLevel;
+		}
+	}
+	
 }
