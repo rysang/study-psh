@@ -435,7 +435,254 @@ public class UserServiceTest {
 
 == 6.4 스프링의 프록시 팩토리 빈 ==
 
+지금까지의 과정을 스프링에서 어떻게 제공하고 있는지 확인해본다.
+
+스프링에서 제공하는 ProxyFactoryBean 은 TxProxyFactoryBean 과 달리 순수하게 프록시를 생성하는 작업만을 담당하고 프록시를 통해 제공해줄 부가기능은 별도의 빈에 둘 수 있다. ProxyFactoryBean 은 MethodInterceptor 인터페이스를 구현한 부가기능을 사용하는데 이는 InvocationHandler 와는 달리 타깃 오브젝트에 대한 정보도 함께 제공받는다.
+
+{{{
+public class DynamicProxyTest {
+   ...
+   @Test
+   public void proxyFactoryBean() {
+      ProxyFactoryBean pfBean = new ProxyFactoryBean();
+      pfBean.setTarget(new HelloTarget());
+      pfBean.addAdvice(new UppercaseAdvice());
+      
+      Hello proxiedHello = (Hello) pfBean.getObject();
+      assertThat(proxiedHello.sayHello("toby"), is("HELLO TOBY"));
+      ...
+   }
+
+   static class UppercaseAdvice implements MethodInterceptor {
+      public Object invoke(MethodInvocation invocation) throws Throwable {
+         String ret = (String) invocation.proceed();
+         return ret.toUpperCase();
+      }
+   }
+   ...
+}
+}}}
+
+MethodInvocation은 일종의 콜백 오브젝트로, proceed() 메소드를 실행하면 타깃 오브젝트의 메소드를 내부적으로 실행해주는 기능이 있다. 바로 이점이 JDK 의 다이내믹 프록시를 직접 사용하는 코드와 스프링이 제공해주는 ProxyFactoryBean 을 사용하는 코드의 가장 큰 차이점이며 장점이다. 템플릿 역할을 하는 MethodInvocation을 싱글톤으로 두고 공유할 수 있다. 
+
+ProxyFactoryBean 에 MethodInterceptor 를 설정해 줄 때 set 이 아닌 addAdvice 메소드를 사용하는 것은 여러개의 MethodInterceptor 를 추가할 수 있다는 점으로 앞서 봤던 프록시 팩토리 빈의 단점을 해결할 수 있다.
+
+또한 Hello 라는 인터페이스를 제공해주는 부분도 없어졌다. setInterfaces() 메소드를 통해서 구현할 수 있지만 ProxyFactoryBean 에 있는 인터페이스 자동 검출 기능을 사용해서 정보를 알아낸다.
+
+이렇듯 어드바이스는 타깃 오브젝트에 종속되지 않는 순수한 부가기능을 담은 오브젝트이다. 
+
+*포인트컷*
+
+invocationHandler 를 구현했을 때는 pattern 정보를 직접 받아 트랜잭션 적용 대상을 판별하였다. 스프링의 MethodInterceptor 는 여러 프록시가 공유해서 사용하므로 여기에 트랜잭션 적용 대상 이름 패턴을 넣어주는 것은 곤란하다. 대신 프록시에 부가기능 적용 메소드를 선택하는 기능을 넣도록 한다.
+
+프록시는 클라이언트로부터 요청을 받으면 먼저 포인트컷에세 부가기능을 부여할 메소드인지를 확인해달라고 요청한다. 포인트컷은 Pointcut 인터페이스를 구현해서 만들면 된다. 프록시는 포인트컷으로부터 부가기능을 적용할 대상 메소드인지 확인 받으면 MethodInterceptor 타입의 어드바이스를 호출한다.
+
+{{{
+@Test
+public void pointcutAdvisor() {
+   ProxyFactoryBean pfBean = new ProxyFactoryBean();
+   pfBean.setTarget(new HelloTarget());
+
+   NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut();
+   pointcut.setMappedName("sayH*");
+   
+   pfBean.setAdvisor(new DefaultPointcutAdvisor(pointcut, new UppercaseAdvice()));
+   ...
+   assertThat(proxiedHello.sayThankYou("toby"), is("Thank You toby"));
+}
+}}}
+
+어드바이저 = 포인트컷 + 어드바이스
+
+*ProxyFactoryBean 적용*
+
+{{{
+...
+public class TransactionAdvice implements MethodInterceptor {
+   PlatformTransactionManager transactionManager;
+   public void setTransactionManager(PlatformTransactionManager transactionManager) {
+      this.transactionManager = transactionManager;
+   }
+   public Object invoke(MethodInvocation invocation) throws Throwble {
+      TransactionStatus status = this.transactionManager.getTransaction(new DefaultTransactionDefinition());
+      try {
+         Object ret = invocation.proceed();
+         this.transactionManager.commit(status);
+         return ret;
+      } catch (RuntimeException e) { // InvocationHandler 와 달리 InvocationTargetExceptino 으로 포장돼서 오지 않는다.
+         this.transactionManager.rollback(status);
+         throw e;
+      }
+   }
+}
+}}}
+
+{{{
+...
+<bean id="transactionPointcut" class="org.springframework.aop.support.NameMatchMethodPointcut">
+   <property name="mappedName" value="upgrade*" />
+</bean>
+
+<bean id="transactionAdvice" class="org.springframework.aop.support.DefaultPointcutAdvisor">
+   <property name="advice" ref="transactionAdvice" />
+   <property name="pointcut" ref="transactionPointcut" />
+</bean>
+
+<bean id="userService" class="org.springframework.aop.framework.ProxyFactoryBean">
+   <property name="target" ref="userServiceImpl" />
+   <property name="interceptorNames">
+      <list>
+         <value>transactionAdvisor</value>
+      </list>
+   </property>
+</bean>
+...
+}}}
+
+{{{
+@Test
+@DirttiesContext
+public void upgradeAllOrNothing() {
+   ...
+   ProxyFactoryBean txProxyFactoryBean = context.getBean("&userService", ProxyFactoryBean.class);
+   txProxyFactoryBean.setTarget(testUserService);
+   UserService txUserService = (UserService) txProxyFactoryBean.getObject();
+   ...
+}}}
+
+ProxyFactoryBean 은 DI, 템플릿/콜백, 서비스 추상화 등의 기법이 모두 적용되었다. 그 덕분에 독립적이고 여러 프록시가 공유할 수 있는 어드바이스와 포인트컷으로 확장 기능을 분리할 수 있어졌다.
+
 == 6.5 스프링 AOP ==
+
+스프링의 ProxyFactoryBean 을 통해 거의 모든 문제를 해결했지만 부가기능의 적용이 필요한 타깃 오브젝트마다 거의 비슷한 내용의 ProxyFactoryBean 빈 설정정보를 추가해주는 부분이다. 
+
+이는 BeanPostProcessor 인터페이스를 구현해서 만드는 빈 후처리기를 통해 해결할 수 있다. 그 중 하나인 DefaultAdvisorAutoProxyCreator 가 빈으로 등록되어 있으면 빈 오브젝트가 생성될때마다 빈 후처리기에 보내서 후처리 작업을 요청한다.
+
+ProxyFactoryBean 에서의 포인트컷은 메소드 선택만 필요했지만 사실 getClassFilter 메소드를 통해 클래스도 거를 수 있다.
+
+{{{
+...
+public class NameMatchClassMethodPointcut extends NameMatchMethodPointcut {
+   public void setMappedName(String mappedClassName) {
+      this.setClassFilter(new SimpleClassFilter(mappedClassName));
+   }
+   static class SimpleClassFilter implements ClassFilter {
+      String mappedName;
+      private SimpleClassFilter(String mappedName) {
+         this.mappedName = mappedName;
+      }
+      public boolean matches(Class<?> clazz) {
+         return PatternMatchUtils.simpleMatch(mappedName, clazz.getSimpleName());
+      }
+   }
+}
+}}}
+
+{{{
+...
+/* id 는 필요없다. 자동 프록시 생성기 등록 */
+<bean class="org.springframework.aop.framework.autoproxy.DefaultAdvixorAutoProxyCreator" /> 
+...
+<bean id="transactionPointcut" class="springbook...NameMatchClassMethodPointcut">
+   <property name="mappedClassName" value="*ServiceImpl" />
+   <property name="mappedName" value="upgrade*" />
+</bean>
+...
+<bean id="userService" class="springbook...UserServiceImpl"> /* 원상복구 */
+   <property name="userDao" ref="userDao" />
+   <property name="mailSender" ref="mailSender" />
+</bean>
+...
+<bean id="testUserService" class="springbook...UserServiceImpl$TestUserServiceImpl" parent="userService" /> /* 스태틱 멤버 클래스, parent 로 userService 빈의 설정을 상속 받음 */
+...
+}}}
+
+{{{
+public class UserServiceTest {
+   @Autowired
+   UserService userService;
+   @Autowired
+   UserService testUserService;
+   ...
+   @Test
+   public void upgradeAllOrNothing() {
+      ...
+      try {
+         this.testUserService.upgradeLevels();
+         ...
+      } ...
+      ...
+   }
+   @Test
+   public void advisorAutoProxyCreator() { // 프록시로 변경된 오브젝트인이 확인
+      assertThat(testUserService, is(java.lang.reflect.Proxy.class));
+   }
+}
+}}}
+
+*포인트컷 표현식*
+
+앞서 만들었던 NameMatchClassMethodPointcut 은 클래스와 메소드의 이름의 패턴을 독립적으로 비교하도록 두 가진 패턴을 프로퍼티로 넣어줬지만 AspectJExpressionPointcut 은 클래스와 메소드의 선정 알고리즘을 포인트컷 표현식을 이용해 한번에 지정할 수 있게 해준다.
+
+{{{
+execution([접근제한자 패턴] 리턴타입패턴 [패키지와 클래스타입패턴.]메소드이름패턴 (파라미터타입패턴 | "..", ...) [throws 예외패턴]
+
+bean(*Service)  // 아이디가 Service 로 끝나는 모든 빈
+
+@annotation(org.springframework.transaction.annotation.Transactional)
+}}}
+
+{{{
+<bean id="transactionPointcut" class="org.springframework.aop.aspectj.AspeectJExpressionPointcut">
+   <property name="expression" value="execution(* *..*ServiceImpl.upgrade*(..))" />
+</bean>
+}}}
+
+이 때, TestUserSerivce 의 클래스 명이 TestUserService 여도 포인트컷 표현식에 해당 된다. 슈퍼클래스가 UserServiceImple 이고 UserService 를 구현하였기 때문에 3가지 모두 해당된다.
+
+*트랜잭션 서비스 추상화*
+
+트랜잭션 적용이라는 추상적인 작업내용은 유지한 채로 구체적인 구현방법을 자유롭게 바꿀 수 있도록 서비스 추상화 기법을 적용했다. 이 덕분에 비즈니스 로직 코드는 트랜잭션을 어떻게 처리해야 한다는 구체적인 방법과 서버환경에서 종속되지 않으며 구체적인 구현 내용을 담은 의존 오브젝트는 런타임 시에 다이내믹하게 연결해 준다는 DI를 활용한 전형적인 접근 방법이었다.
+
+*프록시와 데코레이터 패턴*
+
+추상화를 통해 마저 제거하지 못한 트랜잭션의 경계설정을 담당하는 코드는 DI 를 이용한 데코레이터 패턴을 적용하는 것이었다. 트랜잭션을 처리하는 코드는 일종의 데코레이터에 담겨서, 클라이언트와 비즈니스 로직을 담은 타깃 클래스 사이에 존재하도록 만들었다. 클라이언트가 일종의 대리자인 프록시 역할을 하는 트랜잭션 데코레이터를 거쳐서 타깃에 접근할 수 있게 하였다.
+
+*다이내믹 프록시와 프록시 팩토리 빈*
+
+프록시를 이용해 비즈니스 로직에서 트랜잭션 코드를 모두 제거할 수 있었지만, 모든 메소드마다 해당 코드를 넣어 프록시 클래스를 만드는 작업이 문제가 됐다. 이는 JDK 다이내믹 프록시 기술을 적용해서 프록시 클래스 없이도 프록시 오브젝트를 런타임 시에 만들어 주게 하였지만 동일한 기능의 프록시를 여러 오브젝트에 적용할 경우 오브젝트 단위로는 중복이 일어나는 문제를 해결하지 못했고 이는 스프링의 ProxyFactoryBean 을 이용해서 다이내믹 프록시 생성방법에 DI 를 도입했다. 이는 내부적으로 템플릿/콜백 패턴을 활용하므로서 어드바이스와 포인트컷은 프록시에서 분리될 수 있엇고 여러 프록시에서 공유해서 사용할 수 있게 되었다.
+
+*자동 프록시 생성 방법과 포인트컷*
+
+트랜잭션 적용 대상이 되는 빈마다 일일이 프록시 팩토리 빈을 설정해줘야 하는 부담을 빈 생성 후처리 기법을 활용해 컨테이너 초기화 시점에서 자동으로 프록시를 만들어주는 방법을 도입했다. 처음에는 클래스와 메소드 선정 로직을 담은 코드를 직접 만들어서 포인트컷으로 사용했지만 최종적으로는 포인트컷 표현식을 통해 좀 더 편리하고 깔끔한 방법을 활용해서 사용할 수 있었다.
+
+*부가기능의 모듈화*
+
+트랜잭션이라는 부가기능은 타깃이 존재해야만 의미가 있는 것이었다. 그래서 각 타깃의 모드안에 침투하거나 긴밀한 연결이 필요했지만 이는 DI, 데코레이터 패턴, 다이내믹 프록시, 오브젝트 생성 후처리, 자동 프록시 생성, 포인트 컷과 같은 기법으로 이 문제를 해결할 수 있었다. 덕분에 부가기능은 모듈화 되어 중복되지 않고 변경이 필요할 대 한 곳만 수정하면 되게 되었다. 또 한 포인트 컷이라는 방법을 통해 부가기능을 부여할 대상을 선정함으로써 핵심기능을 담은 코드와 설정에는 전혀 영향을 주지 않아도 됐다.
+
+*AOP : 애스팩트 지향 프로그래밍*
+
+이런 부가기능 모듈, 그 자체로 애플리케이션의 핵심기능을 담고 있지는 않지만 애플리케이션을 구성하는 중요한 한 가지 요소이고 핵심기능에 부가되어 의미를 갖는 특별한 모듈을 애스팩트라고 부른다.
+
+애스팩트는 부가될 기능을 정의한 어드바이스와 적용할 대상을 선정하는 포인트컷을 함께 갖고 있다. 
+
+이렇게 애플리케이션의 핵심적인 기능에서 부가적인 기능을 분리해서 애스팩트라는 독특한 모듈로 만들어서 설계하고 개발하는 방법을 애스팩트 지향 프로그래밍, 관점지향프로그래밍 또는 AOP 라고 부른다.
+
+스프링은 독립적으로 개발한 부가기능 모듈을 다양한 타깃 오브젝트의 메소드에 다이내믹하게 적용해주기 위한 프록시를 이용하는 프록시 방식의 AOP 라고 할 수 있다.
+
+이에 비해 AspectJ 는 프록시 처럼 간접적인 방법이 아니라 타깃 오브젝트를 뜯어 고쳐서 부가기능을 직접 넣어주는 직접적인 방법을 사용한다. 이는 스프링같은 DI 컨테이너의 도움을 받아서 자동 프록시 생성 방식을 사용하지 않아도 되며 훨씬 강력하고 유연한 AOP 가 가능하기 대문이다. 
+
+*AOP 네임스페이스*
+
+aop 등록을 위해서 자동프록시생성기, 어드바이스, 포인트컷, 어드바이저 총 4개의 빈이 등록되어야 했다. 이를 편리하게 사용하기 위해 aop 스키마를 제공한다.
+
+{{{
+<aop:config>
+   <aop:pointcut id="transactionPointcut" expression="execution(* *..*ServiceImpl.upgrade*(..))" />
+   <aop:advisor advice-ref="transactionAdvice" pointcut-ref="transactionPointcut" //>
+</aop:config>
+}}}
+
 
 == 6.6 트랜잭션 속성 ==
 
