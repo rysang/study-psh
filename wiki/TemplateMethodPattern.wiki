@@ -26,3 +26,7 @@ http://cnx.org/content/m17309/latest/TemplateMethodPattern.jpg
 위와 같이 슈퍼 클래스의 invariant 메소드가 템플릿 메소드가 되어서 전체적인 흐름을 관장하며
 
 서브 클래스에서 각각 슈퍼클래스의 추상 메소드인 variant1, variant2를 오버라이딩하여 구체적인 기능을 구현하므로써 서로 다른 처리가 되게 한다.
+
+*SimpleFormController*
+
+스프링 MVC 의 
