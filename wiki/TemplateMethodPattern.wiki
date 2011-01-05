@@ -41,10 +41,10 @@ showForm 과 processFormSubmission 은 입력 폼의 GET, POST 요청 과정에�
 
 http://developerhaus.googlecode.com/files/simpleformcontroller_get.jpg
 
-[SimpleFormController - GET]
+SimpleFormController - GET
 
 http://developerhaus.googlecode.com/files/simpleformcontroller_post.jpg
 
-[SimpleFormController - POST]
+SimpleFormController - POST
 
 출처 : 자바지기닷넷 - SimpleFormController 의 Workflow, http://www.javajigi.net/pages/viewpage.action?pageId=1161
