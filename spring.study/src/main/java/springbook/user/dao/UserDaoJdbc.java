@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -20,9 +21,13 @@ import springbook.user.domain.User;
 public class UserDaoJdbc implements UserDao{
 	
 	private JdbcTemplate jdbcTemplate;
+	private SqlService sqlService;
 	
 	public void setDataSource(DataSource dataSource) {
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
+	}
+	public void setSqlService(SqlService sqlService) {
+		this.sqlService = sqlService;
 	}
 	
 	private RowMapper<User> userMapper = new RowMapper<User>() {
@@ -40,7 +45,7 @@ public class UserDaoJdbc implements UserDao{
 	
 	
 	public void add(final User user) {
-		this.jdbcTemplate.update("insert into users(id, name, password, level, login, recommend) values (?, ?, ?, ?, ?, ?)"
+		this.jdbcTemplate.update(this.sqlService.getSql("userAdd")
 			, user.getId()
 			, user.getName()
 			, user.getPassword()
