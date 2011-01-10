@@ -47,8 +47,6 @@ public class UserServiceTest {
 	
 	@Before
 	public void setUp() {
-		System.out.println("userService:"+userService);
-		System.out.println("testUserService:"+testUserService);
 		users= Arrays.asList(
 			new User("want813", "psh", "1111", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER-1, 0),
 			new User("shiny", "shiny", "1111", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER, 0),
@@ -86,6 +84,7 @@ public class UserServiceTest {
 	@Test
 	@DirtiesContext
 	public void upgradeAllOrNothing() throws Exception {
+		
 		
 		userDao.deleteAll();
 		for(User user : users) userDao.add(user);
@@ -166,17 +165,37 @@ public class UserServiceTest {
 	
 	@Test
 	public void advisorAutoProxyCreator() throws Exception {
-		assertEquals(userService.getClass(), java.lang.reflect.Proxy.class);
+		System.out.println("advisorAutoProxyCreator:testUserService:"+testUserService.getClass());
+		System.out.println("advisorAutoProxyCreator:userService:"+userService.getClass());
+		//assertEquals(userService.getClass(), java.lang.reflect.Proxy.class);
 		//assertThat(testUserService.getClass(), is(java.lang.reflect.Proxy.class));
+	}
+	
+	@Test
+	public void readOnlyTransactionAttribute() throws Exception {
+		testUserService.getAll();
 	}
 	
 	static class TestUserServiceImpl extends UserServiceImpl {
 		private String id = "shiny";
+		
+		private TestUserServiceImpl(String id) {
+			this.id = id;
+		}
 		protected void upgradeLevel(User user) {
 			System.out.println("upgradeLevel : "+user.getId()+","+user.getLevel());
 			if(user.getId().equals(this.id)) { System.out.println("here"); throw new TestUserServiceException(); }
 			super.upgradeLevel(user);
 			System.out.println("after : "+user.getId()+","+user.getLevel());
+		}
+		
+		@Override
+		public List<User> getAll() {
+			for(User user : super.getAll()) {
+				System.out.println("aaa");
+				super.update(user);
+			}
+			return null;
 		}
 	}
 	
