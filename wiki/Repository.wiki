@@ -15,7 +15,7 @@ Repository 란 도메인 객체에 접근하기 위해 컬렉션과 같은 인�
 
 == 2. 도메인 레이어 ==
 
-여기에서 말하는 도메인은 우리가 흔히 사용했던 dto 와는 좀 다르다. 다음 소스와 같이 dto 가 테이블에 1:1로 매핑되고 상태정보만을 가지고 있는 것에 반해 여기에서 보는 도메인은 서비스 레이어 단에 있었던 해당 도메인이 종속된 로직들까지 포함하고 있다.
+여기에서 말하는 도메인은 우리가 흔히 사용했던 dto 와는 좀 다르다. 다음 소스와 같이 dto 가 테이블에 1:1로 매핑되고 상태정보만을 가지고 있는 것에 반해 여기에서 보는 도메인은 서비스 레이어 단에 있었던 해당 도메인이 종속된 로직들까지 포함하고 있다. (isVipCustomer 메소드)
 
 {{{
 class Customer {	
@@ -68,6 +68,49 @@ class Customer {
 }
 }}}
 
+== 3. 도메인 레이어에서의 Repository 사용 예 ==
+
+기존에는 서비스 레이어에서 담당했던 데이터엑세스레이어와의 연동을 repository 를 통해 도메인레이어에서도 직접 할 수 있다. (이것은 구현의 문제로 꼭 도메인레이어에서만 사용하는 것은 아니다.)
+
+{{{
+class CustomerService {
+   ...
+   PointRuleDao pointRuleDao;
+   
+   public void addPoints() {
+      ...
+      PointRule pointRule = pointRuleDao.getCurrentPointRule();
+      for(Customer customer : customers) {
+         customer.doVipPointUpgrade(pointRule);
+      }
+   }
+}
+}}}
+
+{{{
+class Customer {
+   PointRuleRepository pointRuleRepository;
+   ...
+   
+   public void doVipPointUpgrade() {
+      PointRule pointRule = pointRuleRepository.getCurrentPointRule();
+      if(isVipCustomer(pointRule) {
+         customer.setPoint(customer.getPoint() + VIP_POINTS);
+      }
+      ...
+   }
+}
+}}}
+
+== 4. DAO vs Repository ==
+
+http://pds11.egloos.com/pds/200811/23/18/f0081118_4928dae8d3c79.jpg
+
+그림에서 보는 것 처럼 Order 와 OrderLineItem 을 하나의 단위로 보고 OrderLineItem 이 Order 에 종속된다면 이는 OrderRepository 를 사용해서 Order 와 OrderLineItem 컬렉션을 관리하게 된다. 이 때 Order 와 OrderLineItem 을 하나의 개념단위로 묶인 Aggregate 라고 본다.
+
+|| DAO || Repository ||
+|| 테이블 단위 별로 매핑됨 || 개념단위 별로 매핑됨 ||
+|| CRUD 쿼리와 1:1 매칭되는 세밀한 단위의 오퍼레이션을 제공 || 메모리에 로드된 객체 ||
 
 
 = 출처 및 참고자료 =
