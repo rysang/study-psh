@@ -36,9 +36,6 @@
       * [HibernateRepository Hibernate Repository 구현(X)]
       * [MyBatisRepository myBatis Repository 구현(X)]
 
-
-* 전문분야
-
   * [MavenTest 메이븐]
   * [testClassLocation 테스트]
     * [testClassLocation 테스트클래스 소스구조]
