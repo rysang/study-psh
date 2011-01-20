@@ -1,6 +1,6 @@
 #summary 사이드바
 
-* 토비의 스프링 3
+== 토비의 스프링 3 ==
 
   * [TobySpring_01 1장 오브젝트와 의존관계]
     * [OCP OCP]
@@ -35,7 +35,7 @@
        * [IBatisRepository iBatis Repository 구현(X)]
       * [HibernateRepository Hibernate Repository 구현(X)]
       * [MyBatisRepository myBatis Repository 구현(X)]
-= 전문분야 =
+== 전문분야 ==
   * [MavenTest 메이븐]
   * [testClassLocation 테스트]
     * [testClassLocation 테스트클래스 소스구조]
