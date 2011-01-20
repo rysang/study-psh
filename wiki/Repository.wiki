@@ -164,14 +164,10 @@ public class InMemoryStrategy implements
 
 * Patterns of Enterprise Application Architecture, Martin Fowler
 
-- 이북 다운로드 : http://www.free-ebooks-download.org/free-ebook/dotnet/OOPS/Patterns_of_Enterprise_Application_Architecture.php
 
 * Domain Driven Design, Eric Evans
 
-- DDD quickly 다운로드 : http://www.infoq.com/news/2006/12/domain-driven-design
-
 * 스프링프레임워크와 DDD, 마소 (toby, 이일민)
 
-- 다운로드 : http://www.google.co.kr/url?sa=t&source=web&ct=res&cd=12&url=http%3A%2F%2Fbenelog.springnote.com%2Fpages%2F1482418%2Fattachments%2F642298&ei=34q4Sv6nBYPu7AOlg9mCAg&usg=AFQjCNE1b4PpWKvM3qwDA8o9IikCc83MfA&sig2=HHzEMA-_AHyVrrMPUroayw
 
 * 이터니티 블로그, http://aeternum.egloos.com/
