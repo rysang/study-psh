@@ -1,27 +1,47 @@
 #summary 사이드바
 
-* 토비의 스프링
+* 토비의 스프링 3
 
-  * [http://code.google.com/p/study-psh/wiki/TobySpring_01 1장 어쩌고 저쩌고]
-  * [http://code.google.com/p/study-psh/wiki/TobySpring_02 2장 테스트]
-  * [http://code.google.com/p/study-psh/wiki/TobySpring_03 3장 템플릿]
-  * [http://code.google.com/p/study-psh/wiki/TobySpring_04 4장 예외]
-  * [http://code.google.com/p/study-psh/wiki/TobySpring_05 5장 서비스 추상화]
-  * [TobySpring_06 6장 AOP]
+  * [TobySpring_01 1장 오브젝트와 의존관계]
+    * [OCP OCP]
+    * [Singleton 싱글톤 (X)]   
+    * [TemplateMethodPattern 템플릿메소드패턴] 
+    * [AnnotationVsXML 애노테이션 vs XML 기반 설정 (X)]
+    * [TobySpring_01_done 1장 리뷰 정리]
+  * [TobySpring_02 2장 테스트]
+    * [TestWritingCaseStudy 테스트 케이스 공유하기 (X)]
+    * [SpringTestContext 스프링 테스트 컨텍스트 (X)]
+  * [TobySpring_03 3장 템플릿]
+    * [StrategyPattern 전략패턴]
+    * [SpringJdbcTemplate SpringJdbcTemplate]
+    * [TobySpring_03_done 3장 리뷰 정리]
+  * [TobySpring_04 4장 예외]
+    * [TransferException 애니프레임의 예외처리]
+    * [SpringException 스프링기반 예외처리 (X)]
+  * [TobySpring_05 5장 서비스 추상화]
+    * [TestDouble 테스트대역]
+  * [TobySpring_06 6장 AOP (X)]
+  * [TobySpring_10 10장 IoC 컨테이너와 DI(X)]
 
+* Repository
 
-
+  * [Repository Repository 정리]
+  * [RepositoryImplementaitonPreview  Repository 구현 및 적용프로젝트]
+    * [RepositoryPlan Repository 구현 계획 및 일정]
+    * 영속성 기술 별 Repository 적용
+       * [IBatisRepository iBatis Repository 구현(X)]
+      * [HibernateRepository Hibernate Repository 구현(X)]
+      * [MyBatisRepository myBatis Repository 구현(X)]
 
 
 * 전문분야
 
-  * [http://code.google.com/p/study-psh/wiki/SpringSecurity 스프링Security]
-  * [TobySpring_01 한글스프링엠브이씨]
-    * [TobySpring_06 6장 AOP]
-    * [TobySpring_06 6장 AOP]
-  * [TobySpring_01 한글SpringMVC]
-
-
-
+  * [MavenTest 메이븐]
+  * [testClassLocation 테스트]
+    * [testClassLocation 테스트클래스 소스구조]
 
 * 기타
+
+  * [WikiGuide 위키 사용법] 
+  * [CodeGuide 코드 가이드] 
+  * [IssueManagement 이슈 관리방안] 
