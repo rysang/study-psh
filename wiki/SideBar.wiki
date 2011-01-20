@@ -28,8 +28,7 @@
        * [IBatisRepository iBatis Repository 구현(X)]
       * [HibernateRepository Hibernate Repository 구현(X)]
       * [MyBatisRepository myBatis Repository 구현(X)]
-* Repository
-
+* 리파지토리
   * [Repository Repository 정리]
   * [RepositoryImplementaitonPreview  Repository 구현 및 적용프로젝트]
     * [RepositoryPlan Repository 구현 계획 및 일정]
