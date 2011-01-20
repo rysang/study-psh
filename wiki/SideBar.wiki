@@ -20,8 +20,16 @@
     * [SpringException 스프링기반 예외처리 (X)]
   * [TobySpring_05 5장 서비스 추상화]
     * [TestDouble 테스트대역]
+  * [RepositoryImplementaitonPreview  Repository 구현 및 적용프로젝트]
+    * [RepositoryPlan Repository 구현 계획 및 일정]
+    * 영속성 기술 별 Repository 적용
+       * [IBatisRepository iBatis Repository 구현(X)]
+      * [HibernateRepository Hibernate Repository 구현(X)]
+      * [MyBatisRepository myBatis Repository 구현(X)]
   * [TobySpring_06 6장 AOP (X)]
   * [TobySpring_10 10장 IoC 컨테이너와 DI(X)]
+
+
 
 * Repository
 
