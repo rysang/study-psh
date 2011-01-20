@@ -16,9 +16,11 @@
 * 전문분야
 
   * [http://code.google.com/p/study-psh/wiki/SpringSecurity 스프링Security]
-  * [http://code.google.com/p/study-psh/wiki/SpringMVC 한글SpringMVC]
+  * [TobySpring_01 한글SpringMVC]
     * [TobySpring_06 6장 AOP]
     * [TobySpring_06 6장 AOP]
+  * [TobySpring_01 한글SpringMVC]
+
 
 
 
