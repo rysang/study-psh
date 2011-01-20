@@ -28,9 +28,6 @@
        * [IBatisRepository iBatis Repository 구현(X)]
       * [HibernateRepository Hibernate Repository 구현(X)]
       * [MyBatisRepository myBatis Repository 구현(X)]
-
-
-
 * Repository
 
   * [Repository Repository 정리]
