@@ -12,7 +12,7 @@
 == Repository 구현 ==
 
 ==== Hibernate 설정 ====
-  - 도메인 별 *.hbm.xml 매핑파일 설정 또는 애노테이션 설정
+  - 도메인 별 {{{*.hbm.xml}}} 매핑파일 설정 또는 애노테이션 설정
 
 ==== Spring + Hibernate ====
   - SessionFactory 를 SpringBean 으로 등록하기
@@ -24,7 +24,8 @@
 
 ==== 조회 조건 : HQL or Criteria ====
   - Criteria, Criterion, Order, CriterionOperator 공통으로 사용
+
   - d.r.api.Criteria 를 Hibernate 의 Criteria 로 변환 이슈
 
 ==== 이슈사항 ====
-  - 테이블 별이 아닌 Aggregate 단위 구현 이슈
+  - 테이블 별이 아닌 Aggregate 단위 구현 이슈 (마지막에 생각해 볼 문제)
