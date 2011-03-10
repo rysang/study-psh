@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>study</groupId>
+  <artifactId>study</artifactId>
+  <version>0.0.1</version>
+  <packaging>war</packaging>
+  
+	<repositories>
+	  	<repository>
+	  		<id>com.springsource.repository.libraries.release</id>
+	  		<url>http://repository.springsource.com/maven/libraries/release </url>
+	  	</repository>
+		<repository>
+			<id>com.springsource.repository.libraries.external</id>
+			<url>http://repository.springsource.com/maven/libraries/external </url>
+		</repository>
+		<repository>
+			<id>com.springsource.repository.bundles.release</id>
+			<url>http://repository.springsource.com/maven/bundles/release </url>
+		</repository>
+		<repository>
+			<id>com.springsource.repository.bundles.external</id>
+			<url>http://repository.springsource.com/maven/bundles/external </url>
+		</repository>
+		<repository>
+	        <id>JBoss</id>
+	        <name>JBoss Repsitory</name>
+	        <layout>default</layout>
+	        <url>http://repository.jboss.org/maven2</url>
+	    </repository>
+	    <repository>
+			<id>mybatis-snapshot</id>
+			<name>MyBatis Snapshot Repository</name>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</repository> 		
+	</repositories>
+	
+	<dependencies>
+	
+		<!-- spring -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>org.springframework.spring-library</artifactId>
+			<type>libd</type>
+			<version>3.0.5.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-mock</artifactId>
+			<version>2.0.8</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<version>3.0.5.RELEASE</version>
+		</dependency>
+		
+		<!-- junit -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.8.1</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<!-- hibernate -->
+		<dependency>
+       		<groupId>org.hibernate</groupId>
+	       	<artifactId>hibernate-core</artifactId>
+	       	<version>3.3.2.GA</version>
+	    </dependency>
+	    <dependency>
+	       	<groupId>org.hibernate</groupId>
+	       	<artifactId>hibernate-annotations</artifactId>
+	       	<version>3.4.0.GA</version>
+	    </dependency>
+	    <dependency>
+	       	<groupId>org.hibernate</groupId>
+	       	<artifactId>hibernate-commons-annotations</artifactId>
+	       	<version>3.3.0.ga</version>
+	    </dependency>
+	    <dependency>
+	       	<groupId>org.hibernate</groupId>
+	       	<artifactId>hibernate-entitymanager</artifactId>
+	       	<version>3.4.0.GA</version>
+	    </dependency>
+	    <dependency>  
+		    <groupId>org.slf4j</groupId>  
+		    <artifactId>slf4j-log4j12</artifactId>  
+		    <version>1.5.8</version>
+	    </dependency>
+	    
+	    <!-- mybatis -->
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis-spring</artifactId>
+			<version>1.0.0-RC3</version>
+		</dependency>
+		
+		<!-- ibatis -->
+		<dependency>
+			<groupId>org.apache.ibatis</groupId>
+		    <artifactId>ibatis-sqlmap</artifactId>
+		    <version>2.3.4.726</version>
+		</dependency>
+		
+		<!-- hsqldb -->
+		<dependency>
+			<groupId>hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<version>1.8.0.7</version>
+		</dependency>
+		
+	</dependencies> 
+</project>
+
