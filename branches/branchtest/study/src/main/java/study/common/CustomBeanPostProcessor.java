@@ -12,6 +12,7 @@ public class CustomBeanPostProcessor implements BeanPostProcessor {
 			throws BeansException {
 		// TODO Auto-generated method stub
 		System.out.println("postProcessBeforeInitialization");
+		
 		return bean;
 	}
 
